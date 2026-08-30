@@ -1,0 +1,37 @@
+# Build and test output
+.build/
+.build-debug-package/
+build/
+DerivedData/
+debug-output/
+dist-output/
+TestResults/
+*.xctest
+*.xcresult
+*.profdata
+*.gcda
+*.gcno
+*.dSYM
+*.dSYM.zip
+
+# Swift Package Manager and Xcode user state
+.swiftpm/
+Packages/
+Package.resolved
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Local tools and IDE settings
+.claude/
+.vscode/
+.idea/
+*.swp
+*~
+
+# macOS metadata
+.DS_Store
+
+# Keep only bilingual README documents on GitHub
+*.md
+!README.md
+!README_EN.md

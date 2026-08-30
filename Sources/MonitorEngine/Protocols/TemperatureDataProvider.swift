@@ -1,0 +1,29 @@
+import Foundation
+
+public struct FanSpeedInfo: Equatable, Codable {
+    public let currentRPM: Int
+    public let maxRPM: Int
+    public let label: String
+
+    public init(currentRPM: Int, maxRPM: Int, label: String) {
+        self.currentRPM = currentRPM
+        self.maxRPM = maxRPM
+        self.label = label
+    }
+}
+
+public struct TemperatureRawData: Equatable {
+    public let cpuTemperature: Double?
+    public let gpuTemperature: Double?
+    public let fanSpeeds: [FanSpeedInfo]
+
+    public init(cpuTemperature: Double?, gpuTemperature: Double?, fanSpeeds: [FanSpeedInfo]) {
+        self.cpuTemperature = cpuTemperature
+        self.gpuTemperature = gpuTemperature
+        self.fanSpeeds = fanSpeeds
+    }
+}
+
+public protocol TemperatureDataProvider {
+    func readTemperatureData() -> TemperatureRawData
+}

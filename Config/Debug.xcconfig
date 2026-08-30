@@ -1,0 +1,5 @@
+PRODUCT_BUNDLE_IDENTIFIER = com.upupdays.silivue
+INFOPLIST_FILE = Sources/StatusStats/Info.plist
+GENERATE_INFOPLIST_FILE = No
+CODE_SIGN_ENTITLEMENTS = Config/Silivue.entitlements
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
