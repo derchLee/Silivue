@@ -9,92 +9,167 @@ public struct SignalProcessKiller: ProcessKiller {
     }
 }
 
-public final class LibprocDataProvider: ProcessDataProvider {
-    private struct CPUReading {
-        let nanoseconds: UInt64
-        let sampledAt: UInt64
+// MARK: - Port Cache (10秒TTL)
+
+private final class PortCache {
+    static let shared = PortCache()
+    private var cache: [Int32: [String]] = [:]
+    private var lastFetch: Date = .distantPast
+    private let ttl: TimeInterval = 10
+
+    func ports(for pid: Int32) -> [String] {
+        if Date().timeIntervalSince(lastFetch) > ttl {
+            refresh()
+        }
+        return cache[pid] ?? []
     }
 
-    private var previousCPU: [Int32: CPUReading] = [:]
-    private let lock = NSLock()
+    private func refresh() {
+        let task = Process()
+        task.launchPath = "/usr/sbin/lsof"
+        task.arguments = ["-iTCP", "-sTCP:LISTEN", "-n", "-P"]
+        task.environment = ["LANG": "en_US.UTF-8"]
 
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+
+        var outputData = Data()
+        pipe.fileHandleForReading.readabilityHandler = { handler in
+            outputData.append(handler.availableData)
+        }
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch {
+            pipe.fileHandleForReading.readabilityHandler = nil
+            cache = [:]
+            lastFetch = Date()
+            return
+        }
+
+        pipe.fileHandleForReading.readabilityHandler = nil
+        outputData.append(pipe.fileHandleForReading.readDataToEndOfFile())
+
+        guard task.terminationStatus == 0 else {
+            cache = [:]
+            lastFetch = Date()
+            return
+        }
+
+        guard let output = String(data: outputData, encoding: .utf8) else {
+            cache = [:]
+            lastFetch = Date()
+            return
+        }
+
+        var newCache: [Int32: [String]] = [:]
+        for line in output.components(separatedBy: "\n") {
+            let parts = line.split(separator: " ", omittingEmptySubsequences: true)
+            guard parts.count >= 9 else { continue }
+
+            guard let pid = Int32(parts[1]) else { continue }
+            // 格式: NAME -> IP:PORT or *:PORT or 0.0.0.0:PORT
+            let namePart = String(parts[8])
+            let port: String
+            if let colonIdx = namePart.lastIndex(of: ":") {
+                port = String(namePart[namePart.index(after: colonIdx)...])
+            } else {
+                port = namePart
+            }
+
+            newCache[pid, default: []].append(port)
+        }
+
+        cache = newCache
+        lastFetch = Date()
+    }
+}
+
+// MARK: - Data Provider
+
+public final class LibprocDataProvider: ProcessDataProvider {
     public init() {}
 
     public func readProcessList(topN: Int = 500) -> ProcessListData {
-        lock.lock()
-        defer { lock.unlock() }
+        let task = Process()
+        task.launchPath = "/bin/ps"
+        task.arguments = ["-arcwwwxo", "%cpu %mem pid command"]
 
-        let requestedCount = proc_listallpids(nil, 0)
-        guard requestedCount > 0 else {
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+
+        var outputData = Data()
+        pipe.fileHandleForReading.readabilityHandler = { handler in
+            outputData.append(handler.availableData)
+        }
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch {
+            pipe.fileHandleForReading.readabilityHandler = nil
             return ProcessListData(processes: [], totalProcessCount: 0)
         }
 
-        var pids = [Int32](repeating: 0, count: Int(requestedCount) + 128)
-        let actualCount = pids.withUnsafeMutableBytes { buffer in
-            proc_listallpids(buffer.baseAddress, Int32(buffer.count))
-        }
-        guard actualCount > 0 else {
+        pipe.fileHandleForReading.readabilityHandler = nil
+        outputData.append(pipe.fileHandleForReading.readDataToEndOfFile())
+
+        guard task.terminationStatus == 0 else {
             return ProcessListData(processes: [], totalProcessCount: 0)
         }
 
-        let now = DispatchTime.now().uptimeNanoseconds
-        var currentCPU: [Int32: CPUReading] = [:]
+        guard let output = String(data: outputData, encoding: .utf8) else {
+            return ProcessListData(processes: [], totalProcessCount: 0)
+        }
+
+        let portCache = PortCache.shared
         var processes: [ProcessInfoItem] = []
+        let lines = output.components(separatedBy: "\n").dropFirst()
 
-        for pid in pids.prefix(Int(actualCount)) where pid > 0 {
-            var taskInfo = proc_taskinfo()
-            let infoSize = MemoryLayout<proc_taskinfo>.size
-            let readSize = withUnsafeMutablePointer(to: &taskInfo) { pointer in
-                proc_pidinfo(pid, PROC_PIDTASKINFO, 0, pointer, Int32(infoSize))
-            }
-            guard readSize == infoSize else { continue }
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
 
-            let cpuNanoseconds = taskInfo.pti_total_user + taskInfo.pti_total_system
-            currentCPU[pid] = CPUReading(nanoseconds: cpuNanoseconds, sampledAt: now)
-            let cpuPercent = calculateCPUPercent(pid: pid, nanoseconds: cpuNanoseconds, now: now)
+            let parts = trimmed.split(separator: " ", omittingEmptySubsequences: true)
+            guard parts.count >= 4 else { continue }
+
+            guard let cpuPercent = Double(parts[0]),
+                  let memPercent = Double(parts[1]),
+                  let pid = Int32(parts[2]) else { continue }
+
+            let name = parts[3...].joined(separator: " ")
+            let totalMemory = ProcessInfo.processInfo.physicalMemory
+            let memoryBytes = UInt64(Double(totalMemory) * memPercent / 100.0)
+
+            // Get executable path via proc_pidpath
+            let path = getProcessPath(pid: pid)
+
+            // Get listening ports
+            let ports = portCache.ports(for: pid)
 
             processes.append(ProcessInfoItem(
                 pid: pid,
-                name: processName(pid: pid),
+                name: name,
                 cpuPercent: cpuPercent,
-                memoryBytes: taskInfo.pti_resident_size,
-                path: processPath(pid: pid),
-                ports: []
+                memoryBytes: memoryBytes,
+                path: path,
+                ports: ports
             ))
         }
 
-        previousCPU = currentCPU
-        let sorted = processes.sorted { lhs, rhs in
-            if lhs.cpuPercent == rhs.cpuPercent { return lhs.memoryBytes > rhs.memoryBytes }
-            return lhs.cpuPercent > rhs.cpuPercent
-        }
-        return ProcessListData(
-            processes: Array(sorted.prefix(max(0, topN))),
-            totalProcessCount: processes.count
-        )
+        let sorted = processes.sorted { $0.cpuPercent > $1.cpuPercent }
+        let top = Array(sorted.prefix(topN))
+
+        return ProcessListData(processes: top, totalProcessCount: processes.count)
     }
 
-    private func calculateCPUPercent(pid: Int32, nanoseconds: UInt64, now: UInt64) -> Double {
-        guard let previous = previousCPU[pid],
-              nanoseconds >= previous.nanoseconds,
-              now > previous.sampledAt else { return 0 }
-
-        let cpuDelta = Double(nanoseconds - previous.nanoseconds)
-        let timeDelta = Double(now - previous.sampledAt)
-        return cpuDelta / timeDelta * 100
-    }
-
-    private func processName(pid: Int32) -> String {
-        var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
-        guard proc_name(pid, &buffer, UInt32(buffer.count)) > 0 else {
-            return "PID \(pid)"
-        }
-        return String(cString: buffer)
-    }
-
-    private func processPath(pid: Int32) -> String? {
-        var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
-        guard proc_pidpath(pid, &buffer, UInt32(buffer.count)) > 0 else { return nil }
-        return String(cString: buffer)
+    private func getProcessPath(pid: Int32) -> String? {
+        var pathBuffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
+        let result = proc_pidpath(pid, &pathBuffer, UInt32(MAXPATHLEN))
+        guard result > 0 else { return nil }
+        return String(cString: pathBuffer)
     }
 }

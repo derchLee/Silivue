@@ -23,7 +23,9 @@ public struct TemperatureDetailView: View {
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(TechColors.textSecondary)
                 Spacer()
-                GlowLabel(thermalStateText, color: temperatureAccentColor, size: 14)
+                if let cpu = sample.cpuTemperature {
+                    GlowLabel("\(Int(cpu))°C", color: temperatureAccentColor, size: 18)
+                }
             }
 
             // 过热警告
@@ -46,7 +48,7 @@ public struct TemperatureDetailView: View {
                 )
             }
 
-            // Apple public API exposes thermal state rather than sensor temperatures.
+            // 温度详情
             HStack(spacing: 0) {
                 if let cpu = sample.cpuTemperature {
                     tempChip("CPU", "\(Int(cpu))°C", TechColors.accentOrange)
@@ -54,7 +56,9 @@ public struct TemperatureDetailView: View {
                 if let gpu = sample.gpuTemperature {
                     tempChip("GPU", "\(Int(gpu))°C", TechColors.accentYellow)
                 }
-                tempChip("System", thermalStateText, temperatureAccentColor)
+                if let _ = sample.cpuTemperature ?? sample.gpuTemperature {
+                    tempChip("Status", sample.isOverheating ? "Hot" : "Normal", temperatureAccentColor)
+                }
             }
 
             // 风扇转速
@@ -105,20 +109,8 @@ public struct TemperatureDetailView: View {
     }
 
     private var temperatureAccentColor: Color {
-        switch sample.thermalState {
-        case .nominal: return TechColors.accentGreen
-        case .fair: return TechColors.accentOrange
-        case .serious, .critical: return TechColors.accentRed
-        }
-    }
-
-    private var thermalStateText: String {
-        switch sample.thermalState {
-        case .nominal: return "Normal"
-        case .fair: return "Elevated"
-        case .serious: return "Serious"
-        case .critical: return "Critical"
-        }
+        if sample.isOverheating { return TechColors.accentRed }
+        return TechColors.accentOrange
     }
 
     private func tempChip(_ label: String, _ value: String, _ color: Color) -> some View {

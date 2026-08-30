@@ -102,12 +102,12 @@ final class NetworkMonitorTests: XCTestCase {
         var received: [AnyMonitorSample] = []
         monitor.currentSample.sink { received.append($0) }.store(in: &cancellables)
 
-        monitor.start(interval: .twoSeconds)
+        monitor.start(interval: .oneSecond)  // 1s间隔
         timer.fireTick()
 
-        // delta: 1000/2s download, 500/2s upload
-        XCTAssertEqual(received[1].network?.downloadBytesPerSec ?? -1, 500, accuracy: 0.01)
-        XCTAssertEqual(received[1].network?.uploadBytesPerSec ?? -1, 250, accuracy: 0.01)
+        // delta: 1000/1s download, 500/1s upload
+        XCTAssertEqual(received[1].network?.downloadBytesPerSec ?? -1, 1000, accuracy: 0.01)
+        XCTAssertEqual(received[1].network?.uploadBytesPerSec ?? -1, 500, accuracy: 0.01)
     }
 
     func testPublishesOnEachTick() {

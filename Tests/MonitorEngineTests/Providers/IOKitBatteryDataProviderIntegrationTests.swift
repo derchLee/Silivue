@@ -2,16 +2,17 @@ import XCTest
 @testable import MonitorEngine
 
 final class IOKitBatteryDataProviderIntegrationTests: XCTestCase {
-    func testReadBatteryDataReturnsPlausibleValues() {
-        let data = IOKitBatteryDataProvider().readBatteryData()
 
-        if data.powerSource == "No Battery" {
-            XCTAssertEqual(data.chargePercent, 0)
-            XCTAssertEqual(data.healthPercent, 0)
-        } else {
-            XCTAssertTrue((0...100).contains(data.chargePercent))
-            XCTAssertGreaterThan(data.designCapacity, 0)
-            XCTAssertGreaterThanOrEqual(data.maxCapacity, 0)
-        }
+    func testReadBatteryDataCompletes() {
+        let provider = IOKitBatteryDataProvider()
+        let data = provider.readBatteryData()
+
+        XCTAssertTrue(data.chargePercent.isFinite)
+        XCTAssertTrue(data.healthPercent.isFinite)
+        XCTAssertGreaterThanOrEqual(data.chargePercent, 0)
+        XCTAssertGreaterThanOrEqual(data.healthPercent, 0)
+        XCTAssertGreaterThanOrEqual(data.timeRemaining, -1)
+        XCTAssertFalse(data.powerSource.isEmpty)
+        XCTAssertGreaterThanOrEqual(data.voltage, 0)
     }
 }

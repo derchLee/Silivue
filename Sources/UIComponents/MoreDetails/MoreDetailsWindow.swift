@@ -506,17 +506,6 @@ struct DiskMoreTab: View {
 
 enum ProcessSortColumn: String {
     case cpu, memory, name
-
-    func sort(_ processes: [ProcessInfoItem], ascending: Bool) -> [ProcessInfoItem] {
-        switch self {
-        case .cpu:
-            return processes.sorted { ascending ? $0.cpuPercent < $1.cpuPercent : $0.cpuPercent > $1.cpuPercent }
-        case .memory:
-            return processes.sorted { ascending ? $0.memoryBytes < $1.memoryBytes : $0.memoryBytes > $1.memoryBytes }
-        case .name:
-            return processes.sorted { ascending ? $0.name.localizedCompare($1.name) == .orderedAscending : $0.name.localizedCompare($1.name) == .orderedDescending }
-        }
-    }
 }
 
 struct ProcessMoreTab: View {
@@ -529,7 +518,14 @@ struct ProcessMoreTab: View {
 
     private var sortedProcesses: [ProcessInfoItem] {
         guard let proc = engine.latestProcess else { return [] }
-        return sortColumn.sort(proc.topProcesses, ascending: sortAscending)
+        switch sortColumn {
+        case .cpu:
+            return proc.topProcesses.sorted { sortAscending ? $0.cpuPercent < $1.cpuPercent : $0.cpuPercent > $1.cpuPercent }
+        case .memory:
+            return proc.topProcesses.sorted { sortAscending ? $0.memoryBytes < $1.memoryBytes : $0.memoryBytes > $1.memoryBytes }
+        case .name:
+            return proc.topProcesses.sorted { sortAscending ? $0.name.localizedCompare($1.name) == .orderedAscending : $0.name.localizedCompare($1.name) == .orderedDescending }
+        }
     }
 
     var body: some View {
@@ -644,25 +640,29 @@ struct ProcessTableView: NSViewRepresentable {
         scrollView.scrollerStyle = .overlay
 
         let tableView = NSTableView()
-        tableView.rowHeight = 28
+        tableView.rowHeight = 26
         tableView.intercellSpacing = NSSize(width: 0, height: 0)
-        tableView.gridStyleMask = []
+        tableView.gridStyleMask = [.solidVerticalGridLineMask]
+        tableView.gridColor = NSColor(TechColors.borderSubtle)
         tableView.allowsColumnResizing = true
         tableView.allowsColumnReordering = false
         tableView.allowsMultipleSelection = false
+        tableView.columnAutoresizingStyle = .noColumnAutoresizing
         tableView.usesAlternatingRowBackgroundColors = false
         tableView.selectionHighlightStyle = .none  // 自行处理高亮，无选中行时最清晰
         tableView.backgroundColor = NSColor(TechColors.bgPrimary)
         tableView.delegate = context.coordinator
         tableView.dataSource = context.coordinator
-        tableView.headerView = nil  // 第0行为表头
+        let headerView = ProcessTableHeaderView()
+        headerView.frame.size.height = 28
+        tableView.headerView = headerView
 
-        addColumn("name",   title: "NAME",    minW: 80,  w: 130, maxW: 280, tableView: tableView)
-        addColumn("path",   title: "PATH",    minW: 100, w: 200, maxW: 500, tableView: tableView)
-        addColumn("ports",  title: "PORTS",   minW: 60,  w: 90,  maxW: 200, tableView: tableView)
-        addColumn("cpu",    title: sortTitle("CPU%", for: "cpu"),    minW: 50,  w: 70,  maxW: 90,  tableView: tableView)
-        addColumn("memory", title: sortTitle("MEMORY", for: "memory"), minW: 60, w: 90, maxW: 130, tableView: tableView)
-        addColumn("kill",   title: "",        minW: 28,  w: 28,  maxW: 36,  tableView: tableView)
+        addColumn("name",   title: "NAME",    minW: 110, w: 140, maxW: 360, alignment: .left,  tableView: tableView)
+        addColumn("path",   title: "PATH",    minW: 180, w: 260, maxW: 900, alignment: .left,  tableView: tableView)
+        addColumn("ports",  title: "PORTS",   minW: 70,  w: 100, maxW: 260, alignment: .left,  tableView: tableView)
+        addColumn("cpu",    title: sortTitle("CPU%", for: "cpu"), minW: 70, w: 75, maxW: 120, alignment: .right, tableView: tableView)
+        addColumn("memory", title: sortTitle("MEMORY", for: "memory"), minW: 90, w: 110, maxW: 180, alignment: .right, tableView: tableView)
+        addColumn("kill",   title: "",        minW: 28,  w: 30,  maxW: 36,  alignment: .center, tableView: tableView)
 
         scrollView.documentView = tableView
         context.coordinator.tableView = tableView
@@ -672,13 +672,14 @@ struct ProcessTableView: NSViewRepresentable {
         return scrollView
     }
 
-    private func addColumn(_ id: String, title: String, minW: CGFloat, w: CGFloat, maxW: CGFloat, tableView: NSTableView) {
+    private func addColumn(_ id: String, title: String, minW: CGFloat, w: CGFloat, maxW: CGFloat, alignment: NSTextAlignment, tableView: NSTableView) {
         let col = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(id))
         col.title = title
         col.minWidth = minW
         col.width = w
         col.maxWidth = maxW
         col.resizingMask = .userResizingMask
+        col.headerCell = ProcessTableHeaderCell(textCell: title, alignment: alignment, isSortable: id == "cpu" || id == "memory")
         tableView.addTableColumn(col)
     }
 
@@ -696,8 +697,12 @@ struct ProcessTableView: NSViewRepresentable {
             tableView.reloadData()
             for col in tableView.tableColumns {
                 switch col.identifier.rawValue {
-                case "cpu": col.title = sortTitle("CPU%", for: "cpu")
-                case "memory": col.title = sortTitle("MEMORY", for: "memory")
+                case "cpu":
+                    col.title = sortTitle("CPU%", for: "cpu")
+                    col.headerCell.stringValue = col.title
+                case "memory":
+                    col.title = sortTitle("MEMORY", for: "memory")
+                    col.headerCell.stringValue = col.title
                 default: break
                 }
             }
@@ -722,17 +727,12 @@ struct ProcessTableView: NSViewRepresentable {
             self.onKill = onKill
         }
 
-        func numberOfRows(in tableView: NSTableView) -> Int { processes.count + 1 }
+        func numberOfRows(in tableView: NSTableView) -> Int { processes.count }
 
         func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
             guard let col = tableColumn else { return nil }
-
-            // 第0行：表头
-            if row == 0 { return makeHeaderView(for: col) }
-
-            let procRow = row - 1
-            guard procRow < processes.count else { return nil }
-            let proc = processes[procRow]
+            guard row < processes.count else { return nil }
+            let proc = processes[row]
 
             if col.identifier.rawValue == "kill" {
                 let btn = NSButton(title: "", target: self, action: #selector(killClicked(_:)))
@@ -740,7 +740,7 @@ struct ProcessTableView: NSViewRepresentable {
                 btn.isBordered = false
                 btn.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Terminate")
                 btn.imageScaling = .scaleProportionallyDown
-                btn.tag = procRow
+                btn.tag = row
                 btn.contentTintColor = NSColor(TechColors.accentRed)
                 btn.toolTip = "Terminate \(proc.name) (PID \(proc.pid))"
                 return btn
@@ -782,66 +782,8 @@ struct ProcessTableView: NSViewRepresentable {
             return label
         }
 
-        private func makeHeaderView(for col: NSTableColumn) -> NSView {
-            let isSortable = col.identifier.rawValue == "cpu" || col.identifier.rawValue == "memory"
-            let raw = col.title.replacingOccurrences(of: " ▲", with: "").replacingOccurrences(of: " ▼", with: "")
-            let arrow = col.title.contains("▲") ? " ▲" : (col.title.contains("▼") ? " ▼" : "")
-
-            let container = NSView()
-            container.wantsLayer = true
-            container.layer?.backgroundColor = NSColor(TechColors.bgSecondary).cgColor
-
-            // 底部分隔线
-            let sepLine = NSView()
-            sepLine.wantsLayer = true
-            sepLine.layer?.backgroundColor = NSColor(TechColors.borderSubtle).cgColor
-            container.addSubview(sepLine)
-            sepLine.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                sepLine.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-                sepLine.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-                sepLine.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-                sepLine.heightAnchor.constraint(equalToConstant: 1)
-            ])
-
-            let label = NSTextField(labelWithString: raw + arrow)
-            label.font = NSFont.systemFont(ofSize: 10, weight: .semibold)
-            label.textColor = isSortable ? NSColor(TechColors.accentCyan) : NSColor(TechColors.textMuted)
-            label.isBordered = false
-            label.isEditable = false
-            label.drawsBackground = false
-            label.alignment = (col.identifier.rawValue == "name" || col.identifier.rawValue == "path" || col.identifier.rawValue == "ports") ? .left : .right
-
-            container.addSubview(label)
-            label.translatesAutoresizingMaskIntoConstraints = false
-            let lPad: CGFloat = (col.identifier.rawValue == "name" || col.identifier.rawValue == "path" || col.identifier.rawValue == "ports") ? 10 : 0
-            let rPad: CGFloat = (col.identifier.rawValue == "name" || col.identifier.rawValue == "path" || col.identifier.rawValue == "ports") ? 0 : 10
-            NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: lPad),
-                label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -rPad),
-                label.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-            ])
-
-            if isSortable {
-                let hit = NSView()
-                hit.identifier = NSUserInterfaceItemIdentifier(col.identifier.rawValue)
-                container.addSubview(hit)
-                hit.translatesAutoresizingMaskIntoConstraints = false
-                NSLayoutConstraint.activate([
-                    hit.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-                    hit.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-                    hit.topAnchor.constraint(equalTo: container.topAnchor),
-                    hit.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-                ])
-                hit.addGestureRecognizer(NSClickGestureRecognizer(target: self, action: #selector(headerTapped(_:))))
-            }
-
-            return container
-        }
-
-        @objc func headerTapped(_ sender: NSClickGestureRecognizer) {
-            guard let colId = sender.view?.identifier?.rawValue else { return }
-            let sortCol = (colId == "name" || colId == "path" || colId == "ports") ? "cpu" : colId
+        func tableView(_ tableView: NSTableView, didClick tableColumn: NSTableColumn) {
+            let sortCol = tableColumn.identifier.rawValue
             guard sortCol == "cpu" || sortCol == "memory" else { return }
             if _sortColumn == sortCol { _onSort?(sortCol, !_sortAscending) }
             else { _onSort?(sortCol, false) }
@@ -858,13 +800,75 @@ struct ProcessTableView: NSViewRepresentable {
         }
 
         func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
-            row == 0 ? 28 : 26
+            26
         }
 
         @objc private func killClicked(_ sender: NSButton) {
             guard sender.tag < processes.count else { return }
             onKill(processes[sender.tag].pid)
         }
+    }
+}
+
+private final class ProcessTableHeaderView: NSTableHeaderView {
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor(TechColors.bgSecondary).setFill()
+        dirtyRect.fill()
+        super.draw(dirtyRect)
+    }
+}
+
+private final class ProcessTableHeaderCell: NSTableHeaderCell {
+    private let titleAlignment: NSTextAlignment
+    private let sortable: Bool
+
+    init(textCell string: String, alignment: NSTextAlignment, isSortable: Bool) {
+        self.titleAlignment = alignment
+        self.sortable = isSortable
+        super.init(textCell: string)
+    }
+
+    required init(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func draw(withFrame cellFrame: NSRect, in controlView: NSView) {
+        NSColor(TechColors.bgSecondary).setFill()
+        cellFrame.fill()
+
+        let horizontalPadding: CGFloat = titleAlignment == .left ? 10 : 8
+        let textFrame = cellFrame.insetBy(dx: horizontalPadding, dy: 0)
+        drawInterior(withFrame: textFrame, in: controlView)
+
+        NSColor(TechColors.borderSubtle).setStroke()
+        let border = NSBezierPath()
+        border.lineWidth = 1
+        border.move(to: NSPoint(x: cellFrame.maxX - 0.5, y: cellFrame.minY))
+        border.line(to: NSPoint(x: cellFrame.maxX - 0.5, y: cellFrame.maxY))
+        border.move(to: NSPoint(x: cellFrame.minX, y: cellFrame.minY + 0.5))
+        border.line(to: NSPoint(x: cellFrame.maxX, y: cellFrame.minY + 0.5))
+        border.stroke()
+    }
+
+    override func drawInterior(withFrame cellFrame: NSRect, in controlView: NSView) {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = titleAlignment
+        paragraph.lineBreakMode = .byTruncatingTail
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
+            .foregroundColor: sortable ? NSColor(TechColors.accentCyan) : NSColor(TechColors.textMuted),
+            .paragraphStyle: paragraph
+        ]
+        let title = NSAttributedString(string: stringValue, attributes: attributes)
+        let textHeight = title.size().height
+        let textRect = NSRect(
+            x: cellFrame.minX,
+            y: cellFrame.midY - textHeight / 2,
+            width: cellFrame.width,
+            height: textHeight
+        )
+        title.draw(in: textRect)
     }
 }
 
@@ -881,24 +885,9 @@ struct HistoryChartView24h: View {
     @State private var isLoading = true
 
     struct ChartDataPoint: Identifiable {
+        let id = UUID()
         let timestamp: Date
         let value: Double
-        var id: Date { timestamp }
-
-        static func aggregate(_ points: [ChartDataPoint], interval: TimeInterval = 30) -> [ChartDataPoint] {
-            guard interval > 0 else { return points }
-
-            let buckets = Dictionary(grouping: points) { point in
-                floor(point.timestamp.timeIntervalSince1970 / interval)
-            }
-            return buckets.map { bucket, values in
-                ChartDataPoint(
-                    timestamp: Date(timeIntervalSince1970: bucket * interval),
-                    value: values.reduce(0) { $0 + $1.value } / Double(values.count)
-                )
-            }
-            .sorted { $0.timestamp < $1.timestamp }
-        }
     }
 
     private var domainStart: Date {
@@ -1017,11 +1006,10 @@ struct HistoryChartView24h: View {
                 await MainActor.run { isLoading = false }
                 return
             }
-            let rawPoints = samples.compactMap { sample -> ChartDataPoint? in
+            let points = samples.compactMap { sample -> ChartDataPoint? in
                 guard let value = valueExtractor(sample) else { return nil }
                 return ChartDataPoint(timestamp: sample.timestamp, value: value)
             }
-            let points = ChartDataPoint.aggregate(rawPoints)
             await MainActor.run {
                 self.dataPoints = points
                 self.isLoading = false

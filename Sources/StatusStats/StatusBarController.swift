@@ -132,22 +132,15 @@ class StatusBarController: NSObject {
             }
         }
 
-        // Public thermal state; Apple does not expose sensor temperatures to App Store apps.
-        if settings.enabledMonitors.contains("temperature"), let temp = engine.latestTemperature {
-            let state: String
-            switch temp.thermalState {
-            case .nominal: state = "OK"
-            case .fair: state = "WARM"
-            case .serious: state = "HOT"
-            case .critical: state = "CRIT"
-            }
+        // Temperature（无温度数据时不显示）
+        if settings.enabledMonitors.contains("temperature"), let temp = engine.latestTemperature, let cpu = temp.cpuTemperature {
             switch settings.displayMode {
             case .compact:
-                parts.append("TEMP \(state)")
+                parts.append("\(Int(cpu))°C")
             case .icon:
-                parts.append("TMP\(state)")
+                parts.append("TMP\(Int(cpu))")
             case .numeric:
-                parts.append("TEMP:\(state)")
+                parts.append("CPU:\(Int(cpu))°C")
             }
         }
 

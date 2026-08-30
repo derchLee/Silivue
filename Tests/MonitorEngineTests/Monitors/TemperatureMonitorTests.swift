@@ -143,14 +143,6 @@ final class TemperatureMonitorTests: XCTestCase {
         XCTAssertFalse(sample.isOverheating)
     }
 
-    func testComputeSample_seriousThermalStateIsOverheating() {
-        let data = TemperatureRawData(cpuTemperature: nil, gpuTemperature: nil, fanSpeeds: [], thermalState: .serious)
-        let sample = TemperatureMonitor.computeSample(from: data)
-
-        XCTAssertEqual(sample.thermalState, .serious)
-        XCTAssertTrue(sample.isOverheating)
-    }
-
     func testComputeSample_noFans() {
         let data = TemperatureRawData(cpuTemperature: 55.0, gpuTemperature: nil, fanSpeeds: [])
         let sample = TemperatureMonitor.computeSample(from: data)

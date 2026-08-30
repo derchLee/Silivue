@@ -18,8 +18,7 @@ let package = Package(
             dependencies: ["MonitorEngine", "DataLayer", "UIComponents"],
             path: "Sources/StatusStats",
             exclude: ["Info.plist"],
-            resources: [.process("Assets.xcassets"), .copy("Silivue.icns")],
-            linkerSettings: [.linkedFramework("CoreLocation")]
+            resources: [.process("Assets.xcassets"), .copy("Silivue.icns")]
         ),
 
         // MARK: - MonitorEngine
