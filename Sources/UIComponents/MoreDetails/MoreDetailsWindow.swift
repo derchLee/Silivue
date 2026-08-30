@@ -885,9 +885,24 @@ struct HistoryChartView24h: View {
     @State private var isLoading = true
 
     struct ChartDataPoint: Identifiable {
-        let id = UUID()
         let timestamp: Date
         let value: Double
+        var id: Date { timestamp }
+
+        static func aggregate(_ points: [ChartDataPoint], interval: TimeInterval = 30) -> [ChartDataPoint] {
+            guard interval > 0 else { return points }
+
+            let buckets = Dictionary(grouping: points) { point in
+                floor(point.timestamp.timeIntervalSince1970 / interval)
+            }
+            return buckets.map { bucket, values in
+                ChartDataPoint(
+                    timestamp: Date(timeIntervalSince1970: bucket * interval),
+                    value: values.reduce(0) { $0 + $1.value } / Double(values.count)
+                )
+            }
+            .sorted { $0.timestamp < $1.timestamp }
+        }
     }
 
     private var domainStart: Date {
@@ -1006,10 +1021,11 @@ struct HistoryChartView24h: View {
                 await MainActor.run { isLoading = false }
                 return
             }
-            let points = samples.compactMap { sample -> ChartDataPoint? in
+            let rawPoints = samples.compactMap { sample -> ChartDataPoint? in
                 guard let value = valueExtractor(sample) else { return nil }
                 return ChartDataPoint(timestamp: sample.timestamp, value: value)
             }
+            let points = ChartDataPoint.aggregate(rawPoints)
             await MainActor.run {
                 self.dataPoints = points
                 self.isLoading = false

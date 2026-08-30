@@ -4,17 +4,21 @@ import MonitorEngine
 import DataLayer
 import UIComponents
 import ServiceManagement
+import CoreLocation
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, CLLocationManagerDelegate {
     var statusBarController: StatusBarController?
     let monitorEngine = MonitorEngine()
     let settings = UserDefaultsStore()
     var historyStore: SQLiteHistoryStore?
     var cancellables = Set<AnyCancellable>()
+    private let locationManager = CLLocationManager()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 菜单栏应用不显示Dock图标
         NSApp.setActivationPolicy(.accessory)
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
 
         // 初始化历史存储
         if let store = try? SQLiteHistoryStore() {
@@ -30,7 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         monitorEngine.register(NetworkMonitor(dataProvider: DarwinNetworkDataProvider(), connectionProvider: CoreWLANDataProvider(), timer: DispatchRefreshTimer()))
         monitorEngine.register(DiskMonitor(dataProvider: FoundationDiskDataProvider(), timer: DispatchRefreshTimer()))
         monitorEngine.register(BatteryMonitor(dataProvider: IOKitBatteryDataProvider(), timer: DispatchRefreshTimer()))
-        monitorEngine.register(TemperatureMonitor(dataProvider: IOKitSMCDataProvider(), timer: DispatchRefreshTimer()))
+        monitorEngine.register(TemperatureMonitor(dataProvider: ProcessInfoThermalDataProvider(), timer: DispatchRefreshTimer()))
         monitorEngine.register(ProcessMonitor(dataProvider: LibprocDataProvider(), timer: DispatchRefreshTimer()))
 
         // 设置菜单栏控制器

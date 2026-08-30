@@ -42,11 +42,13 @@ public final class TemperatureMonitor: SystemMonitor {
     public static func computeSample(from data: TemperatureRawData) -> TemperatureSample {
         let cpuOverheating = (data.cpuTemperature ?? 0) > 90
         let gpuOverheating = (data.gpuTemperature ?? 0) > 95
+        let systemOverheating = data.thermalState == .serious || data.thermalState == .critical
         return TemperatureSample(
             cpuTemperature: data.cpuTemperature,
             gpuTemperature: data.gpuTemperature,
             fanSpeeds: data.fanSpeeds,
-            isOverheating: cpuOverheating || gpuOverheating
+            thermalState: data.thermalState,
+            isOverheating: cpuOverheating || gpuOverheating || systemOverheating
         )
     }
 
