@@ -506,6 +506,17 @@ struct DiskMoreTab: View {
 
 enum ProcessSortColumn: String {
     case cpu, memory, name
+
+    func sort(_ processes: [ProcessInfoItem], ascending: Bool) -> [ProcessInfoItem] {
+        switch self {
+        case .cpu:
+            return processes.sorted { ascending ? $0.cpuPercent < $1.cpuPercent : $0.cpuPercent > $1.cpuPercent }
+        case .memory:
+            return processes.sorted { ascending ? $0.memoryBytes < $1.memoryBytes : $0.memoryBytes > $1.memoryBytes }
+        case .name:
+            return processes.sorted { ascending ? $0.name.localizedCompare($1.name) == .orderedAscending : $0.name.localizedCompare($1.name) == .orderedDescending }
+        }
+    }
 }
 
 struct ProcessMoreTab: View {
@@ -518,14 +529,7 @@ struct ProcessMoreTab: View {
 
     private var sortedProcesses: [ProcessInfoItem] {
         guard let proc = engine.latestProcess else { return [] }
-        switch sortColumn {
-        case .cpu:
-            return proc.topProcesses.sorted { sortAscending ? $0.cpuPercent < $1.cpuPercent : $0.cpuPercent > $1.cpuPercent }
-        case .memory:
-            return proc.topProcesses.sorted { sortAscending ? $0.memoryBytes < $1.memoryBytes : $0.memoryBytes > $1.memoryBytes }
-        case .name:
-            return proc.topProcesses.sorted { sortAscending ? $0.name.localizedCompare($1.name) == .orderedAscending : $0.name.localizedCompare($1.name) == .orderedDescending }
-        }
+        return sortColumn.sort(proc.topProcesses, ascending: sortAscending)
     }
 
     var body: some View {
@@ -657,7 +661,7 @@ struct ProcessTableView: NSViewRepresentable {
         addColumn("path",   title: "PATH",    minW: 100, w: 200, maxW: 500, tableView: tableView)
         addColumn("ports",  title: "PORTS",   minW: 60,  w: 90,  maxW: 200, tableView: tableView)
         addColumn("cpu",    title: sortTitle("CPU%", for: "cpu"),    minW: 50,  w: 70,  maxW: 90,  tableView: tableView)
-        addColumn("mem",    title: sortTitle("MEMORY", for: "mem"),  minW: 60,  w: 90,  maxW: 130, tableView: tableView)
+        addColumn("memory", title: sortTitle("MEMORY", for: "memory"), minW: 60, w: 90, maxW: 130, tableView: tableView)
         addColumn("kill",   title: "",        minW: 28,  w: 28,  maxW: 36,  tableView: tableView)
 
         scrollView.documentView = tableView
@@ -693,7 +697,7 @@ struct ProcessTableView: NSViewRepresentable {
             for col in tableView.tableColumns {
                 switch col.identifier.rawValue {
                 case "cpu": col.title = sortTitle("CPU%", for: "cpu")
-                case "mem": col.title = sortTitle("MEMORY", for: "mem")
+                case "memory": col.title = sortTitle("MEMORY", for: "memory")
                 default: break
                 }
             }
@@ -758,7 +762,7 @@ struct ProcessTableView: NSViewRepresentable {
             case "cpu":
                 let t = String(format: "%.1f%%", proc.cpuPercent)
                 return (t, cpuColor(for: proc.cpuPercent))
-            case "mem":
+            case "memory":
                 return (ByteFormatter.format(proc.memoryBytes), NSColor(TechColors.accentPurple))
             default:
                 return ("", NSColor(TechColors.textMuted))
@@ -779,7 +783,7 @@ struct ProcessTableView: NSViewRepresentable {
         }
 
         private func makeHeaderView(for col: NSTableColumn) -> NSView {
-            let isSortable = col.identifier.rawValue == "cpu" || col.identifier.rawValue == "mem"
+            let isSortable = col.identifier.rawValue == "cpu" || col.identifier.rawValue == "memory"
             let raw = col.title.replacingOccurrences(of: " ▲", with: "").replacingOccurrences(of: " ▼", with: "")
             let arrow = col.title.contains("▲") ? " ▲" : (col.title.contains("▼") ? " ▼" : "")
 
@@ -838,7 +842,7 @@ struct ProcessTableView: NSViewRepresentable {
         @objc func headerTapped(_ sender: NSClickGestureRecognizer) {
             guard let colId = sender.view?.identifier?.rawValue else { return }
             let sortCol = (colId == "name" || colId == "path" || colId == "ports") ? "cpu" : colId
-            guard sortCol == "cpu" || sortCol == "mem" else { return }
+            guard sortCol == "cpu" || sortCol == "memory" else { return }
             if _sortColumn == sortCol { _onSort?(sortCol, !_sortAscending) }
             else { _onSort?(sortCol, false) }
         }
@@ -877,9 +881,24 @@ struct HistoryChartView24h: View {
     @State private var isLoading = true
 
     struct ChartDataPoint: Identifiable {
-        let id = UUID()
         let timestamp: Date
         let value: Double
+        var id: Date { timestamp }
+
+        static func aggregate(_ points: [ChartDataPoint], interval: TimeInterval = 30) -> [ChartDataPoint] {
+            guard interval > 0 else { return points }
+
+            let buckets = Dictionary(grouping: points) { point in
+                floor(point.timestamp.timeIntervalSince1970 / interval)
+            }
+            return buckets.map { bucket, values in
+                ChartDataPoint(
+                    timestamp: Date(timeIntervalSince1970: bucket * interval),
+                    value: values.reduce(0) { $0 + $1.value } / Double(values.count)
+                )
+            }
+            .sorted { $0.timestamp < $1.timestamp }
+        }
     }
 
     private var domainStart: Date {
@@ -998,10 +1017,11 @@ struct HistoryChartView24h: View {
                 await MainActor.run { isLoading = false }
                 return
             }
-            let points = samples.compactMap { sample -> ChartDataPoint? in
+            let rawPoints = samples.compactMap { sample -> ChartDataPoint? in
                 guard let value = valueExtractor(sample) else { return nil }
                 return ChartDataPoint(timestamp: sample.timestamp, value: value)
             }
+            let points = ChartDataPoint.aggregate(rawPoints)
             await MainActor.run {
                 self.dataPoints = points
                 self.isLoading = false

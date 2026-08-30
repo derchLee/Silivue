@@ -70,10 +70,10 @@ final class UserDefaultsStoreTests: XCTestCase {
         var receivedSettings: [AppSettings] = []
         store.settingsChanged.sink { receivedSettings.append($0) }.store(in: &cancellables)
 
-        store.refreshInterval = .oneSecond
+        store.refreshInterval = .tenSeconds
 
         // 至少收到一次变更
         XCTAssertTrue(receivedSettings.count >= 1)
-        XCTAssertEqual(receivedSettings.last?.refreshInterval, .oneSecond)
+        XCTAssertEqual(receivedSettings.last?.refreshInterval, .tenSeconds)
     }
 }

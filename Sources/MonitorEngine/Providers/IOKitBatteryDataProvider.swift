@@ -48,7 +48,9 @@ public final class IOKitBatteryDataProvider: BatteryDataProvider {
         let sourceIDs = psSources.takeRetainedValue() as [CFTypeRef]
         for sourceID in sourceIDs {
             guard let desc = IOPSGetPowerSourceDescription(psInfoRef, sourceID) else { continue }
-            guard let source = desc.takeRetainedValue() as? [String: Any] else { continue }
+            // IOPSGetPowerSourceDescription follows the Get rule. The dictionary is
+            // owned by psInfo and must not be released by the caller.
+            guard let source = desc.takeUnretainedValue() as? [String: Any] else { continue }
             guard let state = source[kIOPSPowerSourceStateKey] as? String else { continue }
 
             let charge = (source[kIOPSCurrentCapacityKey] as? Int).map { Double($0) } ?? 100

@@ -20,7 +20,7 @@ final class AppSettingsTests: XCTestCase {
 
     func testDifferentSettings() {
         let s1 = AppSettings()
-        let s2 = AppSettings(refreshInterval: .oneSecond)
+        let s2 = AppSettings(refreshInterval: .thirtySeconds)
         XCTAssertNotEqual(s1, s2)
     }
 
