@@ -20,6 +20,7 @@ Packages/
 Package.resolved
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
+**/xcuserdata/
 
 # Local tools and IDE settings
 .claude/
