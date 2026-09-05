@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Privacy Policy for Silivue, a privacy-first macOS system monitor.">
+  <title>Silivue Privacy Policy</title>
+  <style>
+    :root {
+      --ink: #eef4ff;
+      --muted: #9aa9c5;
+      --line: rgba(139, 166, 211, 0.2);
+      --surface: rgba(16, 24, 49, 0.78);
+      --surface-strong: #111a35;
+      --cyan: #1bdcf4;
+      --violet: #a668ff;
+      --green: #43e2a5;
+      --page: #070b17;
+      --max: 920px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 12%, rgba(27, 220, 244, 0.12), transparent 30rem),
+        radial-gradient(circle at 92% 72%, rgba(166, 104, 255, 0.12), transparent 34rem),
+        var(--page);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 17px;
+      line-height: 1.72;
+      min-height: 100vh;
+    }
+
+    a { color: var(--cyan); text-underline-offset: 0.2em; }
+    a:hover { color: #8cf2ff; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; }
+
+    .shell {
+      width: min(calc(100% - 40px), var(--max));
+      margin: 0 auto;
+      padding: 32px 0 88px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 28px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--ink);
+      font-weight: 750;
+      letter-spacing: -0.02em;
+    }
+
+    .pulse {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(27, 220, 244, 0.35);
+      border-radius: 50%;
+      color: var(--cyan);
+      background: rgba(27, 220, 244, 0.1);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 16px;
+      box-shadow: 0 0 32px rgba(27, 220, 244, 0.1);
+    }
+
+    .language-nav { display: flex; gap: 8px; }
+
+    .language-nav button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 13px;
+      color: var(--muted);
+      background: rgba(10, 16, 33, 0.72);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .language-nav button[aria-selected="true"] {
+      color: #07121c;
+      border-color: var(--cyan);
+      background: var(--cyan);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(34px, 7vw, 68px);
+      border: 1px solid var(--line);
+      border-radius: 28px 28px 8px 8px;
+      background: linear-gradient(145deg, rgba(17, 26, 53, 0.96), rgba(9, 14, 30, 0.92));
+      box-shadow: 0 32px 90px rgba(0, 0, 0, 0.28);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -85px;
+      top: -115px;
+      width: 310px;
+      height: 310px;
+      border: 1px solid rgba(27, 220, 244, 0.18);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 34px rgba(27, 220, 244, 0.025),
+        0 0 0 72px rgba(166, 104, 255, 0.025);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--green);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      font-size: clamp(42px, 8vw, 76px);
+      line-height: 1.02;
+      letter-spacing: -0.055em;
+    }
+
+    .lede {
+      max-width: 680px;
+      margin: 24px 0 0;
+      color: #c3cee3;
+      font-size: clamp(18px, 2.6vw, 23px);
+      line-height: 1.55;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin: 1px 0 42px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px 8px 22px 22px;
+      background: var(--line);
+    }
+
+    .summary div { padding: 20px 22px; background: var(--surface-strong); }
+    .summary strong { display: block; margin-bottom: 4px; color: var(--cyan); font-size: 15px; }
+    .summary span { color: var(--muted); font-size: 14px; }
+
+    article { padding: 0 clamp(4px, 4vw, 36px); }
+
+    section {
+      padding: 34px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    section:first-child { border-top: 0; }
+
+    h2 {
+      margin: 0 0 15px;
+      font-size: clamp(23px, 3vw, 30px);
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+    }
+
+    h3 { margin: 24px 0 8px; font-size: 18px; }
+    p { margin: 0 0 16px; }
+    ul { margin: 12px 0 18px; padding-left: 1.3em; }
+    li { margin: 7px 0; }
+    .muted { color: var(--muted); }
+
+    .callout {
+      margin: 22px 0;
+      padding: 20px 22px;
+      border-left: 3px solid var(--cyan);
+      border-radius: 4px 14px 14px 4px;
+      background: rgba(27, 220, 244, 0.07);
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    [data-language-panel][hidden] { display: none; }
+
+    @media (max-width: 680px) {
+      body { font-size: 16px; }
+      .shell { width: min(calc(100% - 24px), var(--max)); padding-top: 18px; }
+      .topbar { align-items: flex-start; }
+      .summary { grid-template-columns: 1fr; }
+      .hero { border-radius: 20px 20px 7px 7px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+    @media print {
+      :root { --ink: #111827; --muted: #4b5563; --line: #d7dde8; --page: #fff; }
+      body { background: #fff; }
+      .shell { width: 100%; padding: 0; }
+      .topbar, .summary { display: none; }
+      .hero { padding: 0 0 24px; border: 0; box-shadow: none; background: transparent; }
+      .hero::after { display: none; }
+      .eyebrow { color: #374151; }
+      .lede { color: #374151; }
+      article { padding: 0; }
+      a { color: #111827; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="pulse" aria-hidden="true">⌁</span> Silivue</div>
+      <nav class="language-nav" aria-label="Language">
+        <button type="button" data-language-button="en" aria-selected="true">English</button>
+        <button type="button" data-language-button="zh" aria-selected="false">简体中文</button>
+      </nav>
+    </header>
+
+    <div data-language-panel="en">
+      <header class="hero">
+        <p class="eyebrow">Privacy policy · Effective August 30, 2026</p>
+        <h1>Your Mac’s data stays on your Mac.</h1>
+        <p class="lede">Silivue is designed to monitor system activity without creating an account, profiling you, or sending monitoring data to the developer.</p>
+      </header>
+
+      <div class="summary" aria-label="Privacy summary">
+        <div><strong>No account</strong><span>No registration or identity profile</span></div>
+        <div><strong>No tracking</strong><span>No ads or third-party analytics SDKs</span></div>
+        <div><strong>Local history</strong><span>Monitoring history remains on your Mac</span></div>
+      </div>
+
+      <article>
+        <section>
+          <h2>1. Scope</h2>
+          <p>This Privacy Policy explains how Silivue (“Silivue,” “the app,” “we,” or “us”) handles information when you use the Silivue macOS application.</p>
+          <div class="callout"><strong>Short version:</strong> Silivue does not send your system-monitoring data to us. The app reads system information and stores settings and history locally on your Mac.</div>
+        </section>
+
+        <section>
+          <h2>2. Information processed on your Mac</h2>
+          <p>To provide its features, Silivue may read and process the following information locally:</p>
+          <ul>
+            <li>CPU activity and core information;</li>
+            <li>memory usage, pressure, compression, cache, and swap information;</li>
+            <li>network transfer rates, interface details, local network information, and the connected Wi-Fi network name when permission is granted;</li>
+            <li>disk capacity and disk activity;</li>
+            <li>battery charge, power source, health, and cycle information where available; and</li>
+            <li>thermal or temperature information exposed by macOS and supported hardware.</li>
+          </ul>
+          <p>This information is used to display current metrics and historical charts, create on-device health summaries and anomaly explanations, and trigger optional local notifications inside Silivue. It is not transmitted to the developer.</p>
+        </section>
+
+        <section>
+          <h2>3. Local storage and retention</h2>
+          <p>Silivue stores preferences in macOS user defaults and stores monitoring samples in a local database within your Mac’s application-support storage. The app automatically removes monitoring samples older than 30 days when it starts.</p>
+          <p>You can use the History settings in Silivue to prune old history or clear all stored history. Removing the app may not automatically remove all application-support files; macOS users can also remove Silivue’s local support data manually.</p>
+          <p>If you choose Export CSV, Silivue writes the selected history to a location you choose through the macOS save panel. Silivue does not upload or otherwise receive exported files.</p>
+        </section>
+
+        <section>
+          <h2>4. Location permission and Wi-Fi names</h2>
+          <p>macOS restricts access to the connected Wi-Fi network name behind Location Services. Silivue may therefore request location authorization so it can display the current Wi-Fi network name.</p>
+          <p>Silivue does not request, use, store, or transmit your geographic coordinates. If you deny location permission, other monitoring features continue to work, but the Wi-Fi network name may be unavailable. You can change permission at any time in macOS System Settings.</p>
+        </section>
+
+        <section>
+          <h2>5. Data we collect</h2>
+          <p>Silivue does not collect personal information or system-monitoring data from the app. The current version does not include:</p>
+          <ul>
+            <li>developer-operated analytics or telemetry;</li>
+            <li>advertising SDKs or cross-app tracking;</li>
+            <li>accounts, cloud synchronization, or remote storage; or</li>
+            <li>in-app purchases or subscriptions.</li>
+          </ul>
+          <p>Apple may independently process App Store downloads, purchases, diagnostics, or analytics according to Apple’s own policies and your device settings. That processing is controlled by Apple, not Silivue.</p>
+        </section>
+
+        <section>
+          <h2>6. Sharing and sale</h2>
+          <p>Because Silivue does not receive your personal information or monitoring data, we do not sell, rent, or share that data with advertisers, data brokers, or other third parties.</p>
+        </section>
+
+        <section>
+          <h2>7. Security and your choices</h2>
+          <p>Silivue uses the macOS App Sandbox and stores its data locally. No security method can eliminate every risk, so you should also protect your Mac with appropriate account, password, disk-encryption, and operating-system security settings.</p>
+          <p>You can control Silivue by disabling individual monitors, changing the refresh interval, revoking location permission, clearing history, disabling launch at login, or uninstalling the app.</p>
+        </section>
+
+        <section>
+          <h2>8. Children’s privacy</h2>
+          <p>Silivue is a general-purpose system utility and is not directed to children. We do not knowingly collect personal information from children.</p>
+        </section>
+
+        <section>
+          <h2>9. International privacy rights</h2>
+          <p>Silivue does not maintain a developer-controlled database of user personal information. As a result, we generally have no remotely held personal data to access, correct, export, or delete. You remain in control of the information stored locally by the app on your Mac.</p>
+        </section>
+
+        <section>
+          <h2>10. Changes to this policy</h2>
+          <p>We may update this policy when Silivue’s features or legal obligations change. The effective date at the top of this page identifies the current version. Material changes will be reflected on this page and, when appropriate, in the app or its App Store listing.</p>
+        </section>
+
+        <section>
+          <h2>11. Contact</h2>
+          <p>For privacy questions or requests, open a support issue at <a href="https://github.com/derchLee/Silivue/issues" rel="noopener noreferrer">github.com/derchLee/Silivue/issues</a>.</p>
+        </section>
+      </article>
+    </div>
+
+    <div data-language-panel="zh" lang="zh-Hans" hidden>
+      <header class="hero">
+        <p class="eyebrow">隐私政策 · 生效日期：2026 年 8 月 30 日</p>
+        <h1>您的 Mac 数据始终留在您的 Mac 上。</h1>
+        <p class="lede">Silivue 在不创建账号、不建立用户画像、也不向开发者发送监控数据的前提下提供系统监控功能。</p>
+      </header>
+
+      <div class="summary" aria-label="隐私摘要">
+        <div><strong>无需账号</strong><span>无需注册，不建立身份资料</span></div>
+        <div><strong>不跟踪用户</strong><span>无广告和第三方统计 SDK</span></div>
+        <div><strong>历史数据仅存本机</strong><span>监控历史不会上传给开发者</span></div>
+      </div>
+
+      <article>
+        <section>
+          <h2>1. 适用范围</h2>
+          <p>本隐私政策说明 Silivue（以下简称“本应用”或“我们”）在您使用 Silivue macOS 应用时如何处理信息。</p>
+          <div class="callout"><strong>简要说明：</strong>Silivue 不会向我们发送您的系统监控数据。本应用在您的 Mac 上读取系统信息，并仅在本机保存设置和历史记录。</div>
+        </section>
+
+        <section>
+          <h2>2. 在 Mac 本机处理的信息</h2>
+          <p>为了提供功能，Silivue 可能在本机读取和处理：</p>
+          <ul>
+            <li>CPU 活动和核心信息；</li>
+            <li>内存用量、内存压力、压缩、缓存和交换空间信息；</li>
+            <li>网络传输速率、网络接口、本地网络信息，以及授权后读取的当前 Wi-Fi 名称；</li>
+            <li>磁盘容量和磁盘活动；</li>
+            <li>设备支持时的电池电量、电源、健康和循环信息；</li>
+            <li>macOS 和硬件提供的温度或热状态信息。</li>
+          </ul>
+          <p>这些信息仅用于在 Silivue 中显示实时指标和历史图表、在设备本地生成健康摘要与异常解释，以及触发您主动启用的本地通知，不会传输给开发者。</p>
+        </section>
+
+        <section>
+          <h2>3. 本地存储与保留期限</h2>
+          <p>Silivue 使用 macOS 用户偏好设置保存配置，并在 Mac 的应用支持目录中使用本地数据库保存监控样本。应用启动时会自动删除 30 天以前的监控样本。</p>
+          <p>您可以在 Silivue 的“History”设置中清理旧数据或清除全部历史记录。删除应用本身不一定会自动移除所有应用支持文件，您也可以通过 macOS 手动删除 Silivue 的本地支持数据。</p>
+          <p>如果您选择导出 CSV，Silivue 只会将所选历史数据写入您通过 macOS 保存面板指定的位置。Silivue 不会上传或接收导出的文件。</p>
+        </section>
+
+        <section>
+          <h2>4. 定位权限与 Wi-Fi 名称</h2>
+          <p>macOS 将当前 Wi-Fi 网络名称的访问置于“定位服务”权限保护下，因此 Silivue 可能请求定位授权，以显示当前连接的 Wi-Fi 名称。</p>
+          <p>Silivue 不请求、不使用、不保存、也不传输您的地理坐标。拒绝定位权限后，其他监控功能仍可使用，但 Wi-Fi 名称可能无法显示。您可以随时在 macOS“系统设置”中修改该权限。</p>
+        </section>
+
+        <section>
+          <h2>5. 我们收集的数据</h2>
+          <p>Silivue 不通过应用收集个人信息或系统监控数据。当前版本不包含：</p>
+          <ul>
+            <li>开发者运营的分析或遥测服务；</li>
+            <li>广告 SDK 或跨应用跟踪；</li>
+            <li>账号、云同步或远程存储；</li>
+            <li>应用内购买或订阅。</li>
+          </ul>
+          <p>Apple 可能根据其自身政策和您的设备设置，独立处理 App Store 下载、购买、诊断或分析数据。此类处理由 Apple 控制，而非 Silivue。</p>
+        </section>
+
+        <section>
+          <h2>6. 分享与出售</h2>
+          <p>由于 Silivue 不会接收您的个人信息或监控数据，我们不会向广告商、数据经纪商或其他第三方出售、出租或分享这些数据。</p>
+        </section>
+
+        <section>
+          <h2>7. 安全与您的选择</h2>
+          <p>Silivue 使用 macOS App Sandbox 并在本地保存数据。任何安全措施都无法消除全部风险，建议您同时使用适当的账号、密码、磁盘加密和操作系统安全设置保护 Mac。</p>
+          <p>您可以关闭单项监控、调整刷新间隔、撤销定位权限、清除历史记录、关闭登录时启动或卸载应用。</p>
+        </section>
+
+        <section>
+          <h2>8. 儿童隐私</h2>
+          <p>Silivue 是通用系统工具，并非专门面向儿童。我们不会故意收集儿童的个人信息。</p>
+        </section>
+
+        <section>
+          <h2>9. 国际隐私权利</h2>
+          <p>Silivue 不维护由开发者控制的用户个人信息数据库，因此我们通常没有远程保存的个人数据可供访问、更正、导出或删除。您可以控制本应用在 Mac 本地保存的信息。</p>
+        </section>
+
+        <section>
+          <h2>10. 政策变更</h2>
+          <p>当 Silivue 功能或法律义务发生变化时，我们可能更新本政策。页面顶部的生效日期表示当前版本。重大变更将体现在本页面，并在适当情况下通过应用或 App Store 页面说明。</p>
+        </section>
+
+        <section>
+          <h2>11. 联系方式</h2>
+          <p>如有隐私问题或请求，请访问 <a href="https://github.com/derchLee/Silivue/issues" rel="noopener noreferrer">github.com/derchLee/Silivue/issues</a> 提交支持请求。</p>
+        </section>
+      </article>
+    </div>
+
+    <footer>
+      <p>Silivue · Bundle ID: com.upupdays.silivue</p>
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      const buttons = document.querySelectorAll("[data-language-button]");
+      const panels = document.querySelectorAll("[data-language-panel]");
+
+      function showLanguage(language) {
+        panels.forEach((panel) => { panel.hidden = panel.dataset.languagePanel !== language; });
+        buttons.forEach((button) => {
+          button.setAttribute("aria-selected", String(button.dataset.languageButton === language));
+        });
+        document.documentElement.lang = language === "zh" ? "zh-Hans" : "en";
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => showLanguage(button.dataset.languageButton));
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -6,7 +6,6 @@ enum MetricColors {
     static let disk = Color.teal
     static let battery = Color.green
     static let temperature = Color.orange
-    static let process = Color.gray
     static let networkUp = Color.green
     static let networkDown = Color.blue
     static let warning = Color.orange

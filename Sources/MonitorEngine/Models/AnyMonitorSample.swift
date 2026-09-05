@@ -11,7 +11,6 @@ public struct AnyMonitorSample {
     public var disk: DiskSample? { underlying as? DiskSample }
     public var battery: BatterySample? { underlying as? BatterySample }
     public var temperature: TemperatureSample? { underlying as? TemperatureSample }
-    public var process: ProcessSample? { underlying as? ProcessSample }
 
     private let underlying: Any
 
@@ -33,9 +32,6 @@ public struct AnyMonitorSample {
             self.timestamp = s.timestamp
             self.monitorID = s.monitorID
         } else if let s = sample as? TemperatureSample {
-            self.timestamp = s.timestamp
-            self.monitorID = s.monitorID
-        } else if let s = sample as? ProcessSample {
             self.timestamp = s.timestamp
             self.monitorID = s.monitorID
         } else {

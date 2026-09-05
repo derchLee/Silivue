@@ -54,7 +54,7 @@ public class MoreDetailsWindowController: NSObject, NSWindowDelegate {
     }
 }
 
-// MARK: - 主容器视图（5个Tab）
+// MARK: - 主容器视图
 
 struct MoreDetailsContainerView: View {
     @ObservedObject var engine: MonitorEngine
@@ -63,13 +63,13 @@ struct MoreDetailsContainerView: View {
 
     @State private var selectedTab = 0
 
-    private let tabs = ["CPU", "Memory", "Network", "Disk", "Processes"]
+    private let tabs = ["Health", "CPU", "Memory", "Network", "Disk"]
     private let tabColors: [Color] = [
+        TechColors.accentGreen,
         TechColors.accentCyan,
         TechColors.accentPurple,
         TechColors.accentGreen,
-        TechColors.accentTeal,
-        TechColors.accentBlue
+        TechColors.accentTeal
     ]
 
     var body: some View {
@@ -93,6 +93,21 @@ struct MoreDetailsContainerView: View {
                         )
                     }
                     Spacer()
+                    Button(action: openActivityMonitor) {
+                        Label("Open Activity Monitor", systemImage: "waveform.path.ecg.rectangle")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(TechColors.accentBlue)
+                            .padding(.horizontal, 9)
+                            .frame(height: 26)
+                            .background(TechColors.accentBlue.opacity(0.12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(TechColors.accentBlue.opacity(0.45), lineWidth: 1)
+                            )
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Open Apple's Activity Monitor")
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
@@ -108,17 +123,19 @@ struct MoreDetailsContainerView: View {
                 // Tab 内容区
                 Group {
                     switch selectedTab {
-                    case 0: CPUMoreTab(engine: engine, historyStore: historyStore)
-                    case 1: MemoryMoreTab(engine: engine, historyStore: historyStore)
-                    case 2: NetworkMoreTab(engine: engine, historyStore: historyStore)
-                    case 3: DiskMoreTab(engine: engine)
-                    case 4: ProcessMoreTab(engine: engine)
+                    case 0: HealthDashboardView(engine: engine, historyStore: historyStore)
+                    case 1: CPUMoreTab(engine: engine, historyStore: historyStore)
+                    case 2: MemoryMoreTab(engine: engine, historyStore: historyStore)
+                    case 3: NetworkMoreTab(engine: engine, historyStore: historyStore)
+                    case 4: DiskMoreTab(engine: engine)
                     default: EmptyView()
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .environment(\.locale, Locale(identifier: "en_US"))
+        .preferredColorScheme(.dark)
     }
 
     private var moreHeader: some View {
@@ -149,13 +166,18 @@ struct MoreDetailsContainerView: View {
 
     private func tabIcon(for index: Int) -> String {
         switch index {
-        case 0: return "cpu"
-        case 1: return "memorychip"
-        case 2: return "network"
-        case 3: return "internaldrive"
-        case 4: return "list.bullet"
+        case 0: return "heart.text.square"
+        case 1: return "cpu"
+        case 2: return "memorychip"
+        case 3: return "network"
+        case 4: return "internaldrive"
         default: return "chart.bar"
         }
+    }
+
+    private func openActivityMonitor() {
+        let url = URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")
+        NSWorkspace.shared.open(url)
     }
 }
 
@@ -166,7 +188,7 @@ struct CPUMoreTab: View {
     let historyStore: HistoryStore?
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
+        DetailsScrollView {
             VStack(spacing: 12) {
                 if let cpu = engine.latestCPU {
                     metricMainCard(
@@ -185,6 +207,13 @@ struct CPUMoreTab: View {
                         cpuChip("Idle", "\(Int(cpu.idlePercent))%", TechColors.textMuted)
                         cpuChip("Cores", "\(cpu.coreCount)", TechColors.textSecondary)
                     }
+
+                    MetricExplanationCard(
+                        title: cpu.usagePercent >= 80 ? "High processor load" : "CPU load looks normal",
+                        explanation: "CPU usage combines work performed by apps and macOS across all cores.",
+                        recommendation: cpu.usagePercent >= 80 ? "If this persists, open Activity Monitor to find the busiest app." : "Short spikes are normal when launching apps or completing background work.",
+                        color: cpu.usagePercent >= 80 ? TechColors.accentOrange : TechColors.accentCyan
+                    )
 
                     // 24h 图表
                     chartCard(
@@ -245,7 +274,7 @@ struct MemoryMoreTab: View {
     let historyStore: HistoryStore?
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
+        DetailsScrollView {
             VStack(spacing: 12) {
                 if let mem = engine.latestMemory {
                     metricMainCard(
@@ -266,6 +295,13 @@ struct MemoryMoreTab: View {
                         height: 8
                     )
                     .padding(.horizontal, 12)
+
+                    MetricExplanationCard(
+                        title: mem.pressureLevel == .normal ? "Memory pressure is normal" : "Memory pressure needs attention",
+                        explanation: "Memory pressure is more meaningful than used percentage because macOS intentionally uses free RAM for caching.",
+                        recommendation: mem.pressureLevel == .normal ? "High usage alone is usually fine while pressure remains normal." : "Close memory-heavy apps and check swap usage in Activity Monitor.",
+                        color: mem.pressureLevel == .normal ? TechColors.accentPurple : TechColors.accentOrange
+                    )
 
                     chartCard(
                         title: "24h History",
@@ -295,7 +331,7 @@ struct NetworkMoreTab: View {
     let historyStore: HistoryStore?
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
+        DetailsScrollView {
             VStack(spacing: 12) {
                 if let net = engine.latestNetwork {
                     // 实时速度
@@ -347,6 +383,13 @@ struct NetworkMoreTab: View {
                                 .stroke(TechColors.borderSubtle, lineWidth: 1)
                         )
                     }
+
+                    MetricExplanationCard(
+                        title: "Live transfer rate",
+                        explanation: "These values show current upload and download throughput, not your connection's maximum speed.",
+                        recommendation: "Spikes commonly come from downloads, cloud sync, backups, and video calls.",
+                        color: TechColors.accentGreen
+                    )
 
                     // 上传图表
                     chartCard(title: "Upload 24h", color: TechColors.accentGreen) {
@@ -429,11 +472,19 @@ struct DiskMoreTab: View {
     @ObservedObject var engine: MonitorEngine
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
+        DetailsScrollView {
             VStack(spacing: 10) {
                 if let disk = engine.latestDisk {
                     ForEach(disk.volumes) { volume in
                         diskVolumeCard(volume: volume)
+                    }
+                    if let fullest = disk.volumes.max(by: { $0.usagePercent < $1.usagePercent }) {
+                        MetricExplanationCard(
+                            title: fullest.usagePercent >= 90 ? "Disk space is critically low" : "Storage availability",
+                            explanation: "macOS needs free space for updates, swap, caches, and temporary files.",
+                            recommendation: fullest.usagePercent >= 80 ? "Free space soon; keeping 10–20% available helps the system operate reliably." : "Available space is currently within a comfortable range.",
+                            color: volumeUsageColor(percent: fullest.usagePercent)
+                        )
                     }
                 } else {
                     emptyState("No disk data available")
@@ -502,375 +553,6 @@ struct DiskMoreTab: View {
     }
 }
 
-// MARK: - Processes Tab
-
-enum ProcessSortColumn: String {
-    case cpu, memory, name
-}
-
-struct ProcessMoreTab: View {
-    @ObservedObject var engine: MonitorEngine
-
-    @State private var selectedPID: Int32?
-    @State private var showKillConfirmation = false
-    @State private var sortColumn: ProcessSortColumn = .cpu
-    @State private var sortAscending = false
-
-    private var sortedProcesses: [ProcessInfoItem] {
-        guard let proc = engine.latestProcess else { return [] }
-        switch sortColumn {
-        case .cpu:
-            return proc.topProcesses.sorted { sortAscending ? $0.cpuPercent < $1.cpuPercent : $0.cpuPercent > $1.cpuPercent }
-        case .memory:
-            return proc.topProcesses.sorted { sortAscending ? $0.memoryBytes < $1.memoryBytes : $0.memoryBytes > $1.memoryBytes }
-        case .name:
-            return proc.topProcesses.sorted { sortAscending ? $0.name.localizedCompare($1.name) == .orderedAscending : $0.name.localizedCompare($1.name) == .orderedDescending }
-        }
-    }
-
-    var body: some View {
-        ZStack {
-            TechColors.bgPrimary
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // 进程信息头部
-                HStack(spacing: 8) {
-                    ZStack {
-                        Circle()
-                            .fill(TechColors.accentBlue.opacity(0.15))
-                            .frame(width: 26, height: 26)
-                        Image(systemName: "list.bullet")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(TechColors.accentBlue)
-                    }
-                    Text("Processes")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(TechColors.textPrimary)
-
-                    if let proc = engine.latestProcess {
-                        Text("\(proc.totalProcessCount) total")
-                            .font(.system(size: 10))
-                            .foregroundColor(TechColors.textMuted)
-                    }
-
-                    Spacer()
-
-                    // 排序说明
-                    Text("Click header to sort")
-                        .font(.system(size: 9))
-                        .foregroundColor(TechColors.textMuted)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(TechColors.bgSecondary)
-                .overlay(
-                    Rectangle()
-                        .fill(TechColors.accentBlue.opacity(0.15))
-                        .frame(height: 1),
-                    alignment: .bottom
-                )
-
-                // 进程列表
-                if engine.latestProcess != nil {
-                    GeometryReader { geo in
-                        ProcessTableView(
-                            processes: sortedProcesses,
-                            sortColumn: sortColumn.rawValue,
-                            sortAscending: sortAscending,
-                            onSort: { column, ascending in
-                                if sortColumn.rawValue == column {
-                                    sortAscending.toggle()
-                                } else {
-                                    sortColumn = ProcessSortColumn(rawValue: column) ?? .cpu
-                                    sortAscending = ascending
-                                }
-                            },
-                            onKill: { pid in
-                                selectedPID = pid
-                                showKillConfirmation = true
-                            }
-                        )
-                        .frame(height: geo.size.height)
-                    }
-                } else {
-                    VStack {
-                        Spacer()
-                        Text("No process data available")
-                            .font(.system(size: 12))
-                            .foregroundColor(TechColors.textMuted)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-        }
-        .alert("Silivue — Kill Process?", isPresented: $showKillConfirmation) {
-            Button("Cancel", role: .cancel) {}
-            Button("Kill", role: .destructive) {
-                if let pid = selectedPID {
-                    _ = SignalProcessKiller().terminate(pid: pid)
-                }
-            }
-        } message: {
-            if let pid = selectedPID,
-               let proc = engine.latestProcess?.topProcesses.first(where: { $0.pid == pid }) {
-                Text("Are you sure you want to terminate \(proc.name)?")
-            }
-        }
-    }
-}
-
-// MARK: - NSTableView 进程列表（科技感深色主题）
-
-struct ProcessTableView: NSViewRepresentable {
-    let processes: [ProcessInfoItem]
-    let sortColumn: String
-    let sortAscending: Bool
-    let onSort: (String, Bool) -> Void
-    let onKill: (Int32) -> Void
-
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = true
-        scrollView.autohidesScrollers = false
-        scrollView.borderType = .noBorder
-        scrollView.backgroundColor = NSColor(TechColors.bgPrimary)
-        scrollView.scrollerStyle = .overlay
-
-        let tableView = NSTableView()
-        tableView.rowHeight = 26
-        tableView.intercellSpacing = NSSize(width: 0, height: 0)
-        tableView.gridStyleMask = [.solidVerticalGridLineMask]
-        tableView.gridColor = NSColor(TechColors.borderSubtle)
-        tableView.allowsColumnResizing = true
-        tableView.allowsColumnReordering = false
-        tableView.allowsMultipleSelection = false
-        tableView.columnAutoresizingStyle = .noColumnAutoresizing
-        tableView.usesAlternatingRowBackgroundColors = false
-        tableView.selectionHighlightStyle = .none  // 自行处理高亮，无选中行时最清晰
-        tableView.backgroundColor = NSColor(TechColors.bgPrimary)
-        tableView.delegate = context.coordinator
-        tableView.dataSource = context.coordinator
-        let headerView = ProcessTableHeaderView()
-        headerView.frame.size.height = 28
-        tableView.headerView = headerView
-
-        addColumn("name",   title: "NAME",    minW: 110, w: 140, maxW: 360, alignment: .left,  tableView: tableView)
-        addColumn("path",   title: "PATH",    minW: 180, w: 260, maxW: 900, alignment: .left,  tableView: tableView)
-        addColumn("ports",  title: "PORTS",   minW: 70,  w: 100, maxW: 260, alignment: .left,  tableView: tableView)
-        addColumn("cpu",    title: sortTitle("CPU%", for: "cpu"), minW: 70, w: 75, maxW: 120, alignment: .right, tableView: tableView)
-        addColumn("memory", title: sortTitle("MEMORY", for: "memory"), minW: 90, w: 110, maxW: 180, alignment: .right, tableView: tableView)
-        addColumn("kill",   title: "",        minW: 28,  w: 30,  maxW: 36,  alignment: .center, tableView: tableView)
-
-        scrollView.documentView = tableView
-        context.coordinator.tableView = tableView
-        context.coordinator._onSort = onSort
-        context.coordinator._sortColumn = sortColumn
-        context.coordinator._sortAscending = sortAscending
-        return scrollView
-    }
-
-    private func addColumn(_ id: String, title: String, minW: CGFloat, w: CGFloat, maxW: CGFloat, alignment: NSTextAlignment, tableView: NSTableView) {
-        let col = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(id))
-        col.title = title
-        col.minWidth = minW
-        col.width = w
-        col.maxWidth = maxW
-        col.resizingMask = .userResizingMask
-        col.headerCell = ProcessTableHeaderCell(textCell: title, alignment: alignment, isSortable: id == "cpu" || id == "memory")
-        tableView.addTableColumn(col)
-    }
-
-    private func sortTitle(_ base: String, for column: String) -> String {
-        guard sortColumn == column else { return base }
-        return sortAscending ? "\(base) ▲" : "\(base) ▼"
-    }
-
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        context.coordinator.processes = processes
-        context.coordinator._sortColumn = sortColumn
-        context.coordinator._sortAscending = sortAscending
-        context.coordinator._onSort = onSort
-        if let tableView = scrollView.documentView as? NSTableView {
-            tableView.reloadData()
-            for col in tableView.tableColumns {
-                switch col.identifier.rawValue {
-                case "cpu":
-                    col.title = sortTitle("CPU%", for: "cpu")
-                    col.headerCell.stringValue = col.title
-                case "memory":
-                    col.title = sortTitle("MEMORY", for: "memory")
-                    col.headerCell.stringValue = col.title
-                default: break
-                }
-            }
-        }
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(processes: processes, onKill: onKill)
-    }
-
-    class Coordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate {
-        var processes: [ProcessInfoItem]
-        var onKill: (Int32) -> Void
-        weak var tableView: NSTableView?
-
-        var _sortColumn: String = "cpu"
-        var _sortAscending: Bool = false
-        var _onSort: ((String, Bool) -> Void)?
-
-        init(processes: [ProcessInfoItem], onKill: @escaping (Int32) -> Void) {
-            self.processes = processes
-            self.onKill = onKill
-        }
-
-        func numberOfRows(in tableView: NSTableView) -> Int { processes.count }
-
-        func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-            guard let col = tableColumn else { return nil }
-            guard row < processes.count else { return nil }
-            let proc = processes[row]
-
-            if col.identifier.rawValue == "kill" {
-                let btn = NSButton(title: "", target: self, action: #selector(killClicked(_:)))
-                btn.bezelStyle = .inline
-                btn.isBordered = false
-                btn.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Terminate")
-                btn.imageScaling = .scaleProportionallyDown
-                btn.tag = row
-                btn.contentTintColor = NSColor(TechColors.accentRed)
-                btn.toolTip = "Terminate \(proc.name) (PID \(proc.pid))"
-                return btn
-            }
-
-            let (text, color) = textAndColor(for: col, proc: proc)
-            return dataCell(text: text, color: color, colId: col.identifier.rawValue)
-        }
-
-        private func textAndColor(for col: NSTableColumn, proc: ProcessInfoItem) -> (String, NSColor) {
-            switch col.identifier.rawValue {
-            case "name":
-                return (proc.name, NSColor(TechColors.textPrimary))
-            case "path":
-                return (proc.path ?? "—", NSColor(TechColors.textSecondary))
-            case "ports":
-                let t = proc.ports.isEmpty ? "—" : proc.ports.joined(separator: ", ")
-                return (t, NSColor(TechColors.accentCyan))
-            case "cpu":
-                let t = String(format: "%.1f%%", proc.cpuPercent)
-                return (t, cpuColor(for: proc.cpuPercent))
-            case "memory":
-                return (ByteFormatter.format(proc.memoryBytes), NSColor(TechColors.accentPurple))
-            default:
-                return ("", NSColor(TechColors.textMuted))
-            }
-        }
-
-        private func dataCell(text: String, color: NSColor, colId: String) -> NSView {
-            let label = NSTextField(labelWithString: text)
-            label.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
-            label.lineBreakMode = .byTruncatingTail
-            label.toolTip = text
-            label.textColor = color
-            label.isBordered = false
-            label.isEditable = false
-            label.drawsBackground = false
-            label.alignment = (colId == "name" || colId == "path") ? .left : .right
-            return label
-        }
-
-        func tableView(_ tableView: NSTableView, didClick tableColumn: NSTableColumn) {
-            let sortCol = tableColumn.identifier.rawValue
-            guard sortCol == "cpu" || sortCol == "memory" else { return }
-            if _sortColumn == sortCol { _onSort?(sortCol, !_sortAscending) }
-            else { _onSort?(sortCol, false) }
-        }
-
-        private func cpuColor(for percent: Double) -> NSColor {
-            if percent >= 80 { return NSColor(TechColors.accentRed) }
-            if percent >= 50 { return NSColor(TechColors.accentOrange) }
-            return NSColor(TechColors.accentGreen)
-        }
-
-        func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
-            nil  // 用默认 row view，无选中高亮
-        }
-
-        func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
-            26
-        }
-
-        @objc private func killClicked(_ sender: NSButton) {
-            guard sender.tag < processes.count else { return }
-            onKill(processes[sender.tag].pid)
-        }
-    }
-}
-
-private final class ProcessTableHeaderView: NSTableHeaderView {
-    override func draw(_ dirtyRect: NSRect) {
-        NSColor(TechColors.bgSecondary).setFill()
-        dirtyRect.fill()
-        super.draw(dirtyRect)
-    }
-}
-
-private final class ProcessTableHeaderCell: NSTableHeaderCell {
-    private let titleAlignment: NSTextAlignment
-    private let sortable: Bool
-
-    init(textCell string: String, alignment: NSTextAlignment, isSortable: Bool) {
-        self.titleAlignment = alignment
-        self.sortable = isSortable
-        super.init(textCell: string)
-    }
-
-    required init(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func draw(withFrame cellFrame: NSRect, in controlView: NSView) {
-        NSColor(TechColors.bgSecondary).setFill()
-        cellFrame.fill()
-
-        let horizontalPadding: CGFloat = titleAlignment == .left ? 10 : 8
-        let textFrame = cellFrame.insetBy(dx: horizontalPadding, dy: 0)
-        drawInterior(withFrame: textFrame, in: controlView)
-
-        NSColor(TechColors.borderSubtle).setStroke()
-        let border = NSBezierPath()
-        border.lineWidth = 1
-        border.move(to: NSPoint(x: cellFrame.maxX - 0.5, y: cellFrame.minY))
-        border.line(to: NSPoint(x: cellFrame.maxX - 0.5, y: cellFrame.maxY))
-        border.move(to: NSPoint(x: cellFrame.minX, y: cellFrame.minY + 0.5))
-        border.line(to: NSPoint(x: cellFrame.maxX, y: cellFrame.minY + 0.5))
-        border.stroke()
-    }
-
-    override func drawInterior(withFrame cellFrame: NSRect, in controlView: NSView) {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = titleAlignment
-        paragraph.lineBreakMode = .byTruncatingTail
-
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
-            .foregroundColor: sortable ? NSColor(TechColors.accentCyan) : NSColor(TechColors.textMuted),
-            .paragraphStyle: paragraph
-        ]
-        let title = NSAttributedString(string: stringValue, attributes: attributes)
-        let textHeight = title.size().height
-        let textRect = NSRect(
-            x: cellFrame.minX,
-            y: cellFrame.midY - textHeight / 2,
-            width: cellFrame.width,
-            height: textHeight
-        )
-        title.draw(in: textRect)
-    }
-}
 
 // MARK: - 24小时历史图表
 

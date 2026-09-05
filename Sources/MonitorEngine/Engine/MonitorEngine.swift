@@ -12,7 +12,6 @@ public final class MonitorEngine: ObservableObject {
     @Published public private(set) var latestDisk: DiskSample?
     @Published public private(set) var latestBattery: BatterySample?
     @Published public private(set) var latestTemperature: TemperatureSample?
-    @Published public private(set) var latestProcess: ProcessSample?
 
     @Published public private(set) var cpuHistory: [Double] = []
     @Published public private(set) var memoryHistory: [Double] = []
@@ -109,8 +108,6 @@ public final class MonitorEngine: ObservableObject {
                 appendHistory(&temperatureHistory, value: cpuTemp)
             }
         }
-        if sample.process != nil { latestProcess = sample.process }
-
         if historyStore != nil {
             historyBuffer.append(sample)
             if historyBuffer.count >= Self.historyFlushInterval {

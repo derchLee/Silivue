@@ -84,6 +84,22 @@ final class SQLiteHistoryStoreTests: XCTestCase {
         XCTAssertEqual(results.first?.cpu?.usagePercent, 50.0)
     }
 
+    func testQuerySampledCapsDenseHistoryByTimeBuckets() async throws {
+        let start = Date(timeIntervalSince1970: 10_020)
+        let samples = (0..<120).map { index in
+            AnyMonitorSample(CPUSample(timestamp: start.addingTimeInterval(Double(index)),
+                                       usagePercent: Double(index), userPercent: 0,
+                                       systemPercent: 0, idlePercent: 100, coreCount: 8))
+        }
+        try await store.insertBatch(samples)
+
+        let results = try await store.querySampled(monitorID: "cpu", from: start,
+                                                   to: start.addingTimeInterval(120), maxSamples: 4)
+
+        XCTAssertLessThanOrEqual(results.count, 4)
+        XCTAssertEqual(results.map { $0.timestamp }, results.map { $0.timestamp }.sorted())
+    }
+
     // MARK: - Delete
 
     func testDeleteOlderThan() async throws {

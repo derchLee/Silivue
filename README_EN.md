@@ -4,7 +4,7 @@ English · [简体中文](README.md)
 
 ![Silivue icon](Design/Silivue-AppIcon-Source.png)
 
-Silivue is a native, lightweight, and completely free macOS menu bar system monitor. It provides real-time CPU, memory, network, disk, battery, temperature, and process information, with historical charts and a detailed data window.
+Silivue is a native, lightweight, and completely free macOS menu bar system monitor. It provides real-time CPU, memory, network, disk, battery, and temperature information, with historical charts and a detailed data window.
 
 ## Features
 
@@ -14,8 +14,12 @@ Silivue is a native, lightweight, and completely free macOS menu bar system moni
 - Disk capacity and read/write activity
 - Battery level, charging state, and health information
 - Temperature and fan status when supported by the Mac
-- Process CPU, memory, path, and port information
+- Quick access to macOS Activity Monitor from the details window
 - Real-time charts and local historical data
+- Private 24-hour and 7-day health summaries, period comparisons, and an anomaly timeline
+- Actionable local explanations for CPU, memory, network, and disk conditions
+- Configurable alerts for CPU, memory pressure, disk space, and thermal pressure
+- CSV export for metric history in the selected period
 - Multiple menu bar display modes and refresh intervals
 - Launch at login
 
@@ -64,7 +68,7 @@ Before distribution, configure signing in Xcode and Apple Developer using:
 
 ## Privacy
 
-Silivue performs system monitoring and stores history locally. The current version does not upload process names, file paths, network addresses, or system-monitoring data.
+Silivue performs system monitoring, health analysis, anomaly detection, and history storage locally. Notifications are delivered locally by macOS, and CSV files are created only at a location selected by the user. The current version does not upload network addresses, health summaries, or system-monitoring data.
 
 ## Project Structure
 

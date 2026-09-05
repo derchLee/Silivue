@@ -114,6 +114,38 @@ public final class SQLiteHistoryStore: HistoryStore {
         return results
     }
 
+    public func querySampled(monitorID: String, from: Date, to: Date, maxSamples: Int) async throws -> [AnyMonitorSample] {
+        guard maxSamples > 0 else { return [] }
+        let bucketSeconds = max(1, to.timeIntervalSince(from) / Double(maxSamples))
+        let sql = """
+        SELECT sample_type, value_json FROM samples
+        WHERE id IN (
+            SELECT MAX(id) FROM samples
+            WHERE monitor_id = ? AND timestamp >= ? AND timestamp <= ?
+            GROUP BY CAST(timestamp / ? AS INTEGER)
+        )
+        ORDER BY timestamp ASC
+        """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            throw HistoryStoreError.prepareFailed(sqlite3_errcode(db))
+        }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, monitorID, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        sqlite3_bind_double(stmt, 2, from.timeIntervalSince1970)
+        sqlite3_bind_double(stmt, 3, to.timeIntervalSince1970)
+        sqlite3_bind_double(stmt, 4, bucketSeconds)
+
+        var results: [AnyMonitorSample] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let sampleType = String(cString: sqlite3_column_text(stmt, 0))
+            let valueJSON = String(cString: sqlite3_column_text(stmt, 1))
+            if let sample = try decodeSample(type: sampleType, json: valueJSON) { results.append(sample) }
+        }
+        return results
+    }
+
     public func delete(olderThan date: Date) async throws {
         let sql = "DELETE FROM samples WHERE timestamp < ?"
 
@@ -204,9 +236,6 @@ public final class SQLiteHistoryStore: HistoryStore {
         } else if let temp = sample.temperature {
             data = try encoder.encode(temp)
             type = "temperature"
-        } else if let proc = sample.process {
-            data = try encoder.encode(proc)
-            type = "process"
         } else {
             throw HistoryStoreError.unsupportedSampleType
         }
@@ -250,9 +279,6 @@ public final class SQLiteHistoryStore: HistoryStore {
             return AnyMonitorSample(sample)
         case "temperature":
             let sample = try decoder.decode(TemperatureSample.self, from: data)
-            return AnyMonitorSample(sample)
-        case "process":
-            let sample = try decoder.decode(ProcessSample.self, from: data)
             return AnyMonitorSample(sample)
         default:
             return nil

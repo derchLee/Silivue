@@ -23,12 +23,14 @@ public struct DisplaySettingsView: View {
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(TechColors.textPrimary)
                         Spacer()
-                        Picker("", selection: $settings.displayMode) {
+                        Picker("Display Mode", selection: $settings.displayMode) {
                             ForEach(DisplayMode.allCases, id: \.self) { mode in
                                 Text(mode.displayName).tag(mode)
                             }
                         }
                         .pickerStyle(.menu)
+                        .labelsHidden()
+                        .controlSize(.regular)
                         .frame(width: 140)
                     }
                 }

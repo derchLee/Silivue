@@ -25,13 +25,62 @@ public struct GeneralSettingsView: View {
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(TechColors.textPrimary)
                         Spacer()
-                        Picker("", selection: $settings.refreshInterval) {
+                        Picker("Refresh Interval", selection: $settings.refreshInterval) {
                             ForEach(RefreshInterval.allCases, id: \.self) { interval in
                                 Text(interval.displayName).tag(interval)
                             }
                         }
                         .pickerStyle(.menu)
+                        .labelsHidden()
+                        .controlSize(.regular)
                         .frame(width: 140)
+                    }
+                }
+
+                settingCard {
+                    VStack(spacing: 10) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Health Alerts")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(TechColors.textPrimary)
+                                Text("Local notifications for sustained CPU, memory, disk, and thermal issues")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(TechColors.textSecondary)
+                            }
+                            Spacer()
+                            Toggle("", isOn: $settings.healthNotificationsEnabled)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                        }
+
+                        if settings.healthNotificationsEnabled {
+                            Divider().overlay(TechColors.borderSubtle)
+                            HStack {
+                                Text("CPU alert")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(TechColors.textSecondary)
+                                Spacer()
+                                Picker("", selection: $settings.cpuAlertThreshold) {
+                                    Text("75%").tag(75.0)
+                                    Text("85%").tag(85.0)
+                                    Text("95%").tag(95.0)
+                                }
+                                .labelsHidden()
+                                .frame(width: 82)
+
+                                Text("Free disk")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(TechColors.textSecondary)
+                                Picker("", selection: $settings.diskFreeAlertThreshold) {
+                                    Text("5%").tag(5.0)
+                                    Text("10%").tag(10.0)
+                                    Text("15%").tag(15.0)
+                                }
+                                .labelsHidden()
+                                .frame(width: 82)
+                            }
+                        }
                     }
                 }
 

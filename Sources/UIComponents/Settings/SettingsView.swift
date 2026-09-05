@@ -56,6 +56,10 @@ public struct SettingsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        // Native pickers and menus must match the settings panel's dark surfaces,
+        // including when macOS itself is using Light appearance.
+        .preferredColorScheme(.dark)
+        .environment(\.locale, Locale(identifier: "en_US"))
     }
 
     private func tabButton(title: String, icon: String, color: Color, index: Int) -> some View {
@@ -63,10 +67,10 @@ public struct SettingsView: View {
             HStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(selectedTab == index ? color : TechColors.textMuted)
+                    .foregroundColor(selectedTab == index ? color : TechColors.textSecondary)
                 Text(title)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(selectedTab == index ? TechColors.textPrimary : TechColors.textMuted)
+                    .foregroundColor(selectedTab == index ? TechColors.textPrimary : TechColors.textSecondary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)

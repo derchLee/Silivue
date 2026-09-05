@@ -8,6 +8,9 @@ final class MockSettingsStore: SettingsStore {
     var displayMode: DisplayMode = .compact
     var enabledMonitors: Set<String> = ["cpu", "memory", "network"]
     var launchAtLogin: Bool = false
+    var healthNotificationsEnabled: Bool = false
+    var cpuAlertThreshold: Double = 85
+    var diskFreeAlertThreshold: Double = 10
 
     let subject = PassthroughSubject<AppSettings, Never>()
     var settingsChanged: AnyPublisher<AppSettings, Never> {
@@ -19,7 +22,10 @@ final class MockSettingsStore: SettingsStore {
             refreshInterval: refreshInterval,
             displayMode: displayMode,
             enabledMonitors: enabledMonitors,
-            launchAtLogin: launchAtLogin
+            launchAtLogin: launchAtLogin,
+            healthNotificationsEnabled: healthNotificationsEnabled,
+            cpuAlertThreshold: cpuAlertThreshold,
+            diskFreeAlertThreshold: diskFreeAlertThreshold
         ))
     }
 }

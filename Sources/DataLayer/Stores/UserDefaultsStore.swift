@@ -39,6 +39,27 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
         }
     }
 
+    @Published public var healthNotificationsEnabled: Bool {
+        didSet {
+            defaults.set(healthNotificationsEnabled, forKey: Key.healthNotificationsEnabled)
+            publishChange()
+        }
+    }
+
+    @Published public var cpuAlertThreshold: Double {
+        didSet {
+            defaults.set(cpuAlertThreshold, forKey: Key.cpuAlertThreshold)
+            publishChange()
+        }
+    }
+
+    @Published public var diskFreeAlertThreshold: Double {
+        didSet {
+            defaults.set(diskFreeAlertThreshold, forKey: Key.diskFreeAlertThreshold)
+            publishChange()
+        }
+    }
+
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
@@ -58,12 +79,15 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
         }
 
         if let array = defaults.stringArray(forKey: Key.enabledMonitors) {
-            self.enabledMonitors = Set(array)
+            self.enabledMonitors = Set(array).subtracting(["process"])
         } else {
-            self.enabledMonitors = ["cpu", "memory", "network", "disk", "battery", "temperature", "process"]
+            self.enabledMonitors = ["cpu", "memory", "network", "disk", "battery", "temperature"]
         }
 
         self.launchAtLogin = defaults.bool(forKey: Key.launchAtLogin)
+        self.healthNotificationsEnabled = defaults.bool(forKey: Key.healthNotificationsEnabled)
+        self.cpuAlertThreshold = defaults.object(forKey: Key.cpuAlertThreshold) as? Double ?? 85
+        self.diskFreeAlertThreshold = defaults.object(forKey: Key.diskFreeAlertThreshold) as? Double ?? 10
     }
 
     private func publishChange() {
@@ -71,7 +95,10 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
             refreshInterval: refreshInterval,
             displayMode: displayMode,
             enabledMonitors: enabledMonitors,
-            launchAtLogin: launchAtLogin
+            launchAtLogin: launchAtLogin,
+            healthNotificationsEnabled: healthNotificationsEnabled,
+            cpuAlertThreshold: cpuAlertThreshold,
+            diskFreeAlertThreshold: diskFreeAlertThreshold
         ))
     }
 
@@ -80,5 +107,8 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
         static let displayMode = "displayMode"
         static let enabledMonitors = "enabledMonitors"
         static let launchAtLogin = "launchAtLogin"
+        static let healthNotificationsEnabled = "healthNotificationsEnabled"
+        static let cpuAlertThreshold = "cpuAlertThreshold"
+        static let diskFreeAlertThreshold = "diskFreeAlertThreshold"
     }
 }

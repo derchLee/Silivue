@@ -53,6 +53,7 @@ public struct PopoverView: View {
             }
         }
         .frame(width: 320)
+        .environment(\.locale, Locale(identifier: "en_US"))
     }
 
     // MARK: - 顶部标题栏
@@ -81,6 +82,23 @@ public struct PopoverView: View {
 
             Spacer()
 
+            Button(action: onMoreTapped) {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(liveHealthColor)
+                        .frame(width: 6, height: 6)
+                    Text(liveHealthTitle)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(liveHealthColor)
+                }
+                .padding(.horizontal, 7)
+                .frame(height: 24)
+                .background(liveHealthColor.opacity(0.1))
+                .cornerRadius(6)
+            }
+            .buttonStyle(.plain)
+            .help("Open the local health summary")
+
             Button(action: onSettingsTapped) {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 13))
@@ -101,6 +119,18 @@ public struct PopoverView: View {
             alignment: .bottom
         )
     }
+
+    private var needsAttention: Bool {
+        if let cpu = engine.latestCPU, cpu.usagePercent >= 85 { return true }
+        if let memory = engine.latestMemory, memory.pressureLevel != .normal { return true }
+        if let disk = engine.latestDisk, disk.volumes.contains(where: { $0.usagePercent >= 90 }) { return true }
+        if let thermal = engine.latestTemperature,
+           thermal.thermalState == .serious || thermal.thermalState == .critical { return true }
+        return false
+    }
+
+    private var liveHealthTitle: String { needsAttention ? "Attention" : "Healthy" }
+    private var liveHealthColor: Color { needsAttention ? TechColors.accentOrange : TechColors.accentGreen }
 
     // MARK: - CPU 区域
 

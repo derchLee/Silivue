@@ -31,11 +31,25 @@ final class UserDefaultsStoreTests: XCTestCase {
     }
 
     func testDefaultEnabledMonitors() {
-        XCTAssertEqual(store.enabledMonitors, ["cpu", "memory", "network", "disk", "battery", "temperature", "process"])
+        XCTAssertEqual(store.enabledMonitors, ["cpu", "memory", "network", "disk", "battery", "temperature"])
+    }
+
+    func testRemovesLegacyProcessMonitorFromStoredSettings() {
+        testDefaults.set(["cpu", "process"], forKey: "enabledMonitors")
+
+        let migratedStore = UserDefaultsStore(defaults: testDefaults)
+
+        XCTAssertEqual(migratedStore.enabledMonitors, ["cpu"])
     }
 
     func testDefaultLaunchAtLogin() {
         XCTAssertFalse(store.launchAtLogin)
+    }
+
+    func testDefaultHealthAlertSettings() {
+        XCTAssertFalse(store.healthNotificationsEnabled)
+        XCTAssertEqual(store.cpuAlertThreshold, 85)
+        XCTAssertEqual(store.diskFreeAlertThreshold, 10)
     }
 
     // MARK: - 持久化
@@ -62,6 +76,17 @@ final class UserDefaultsStoreTests: XCTestCase {
         store.launchAtLogin = true
         let newStore = UserDefaultsStore(defaults: testDefaults)
         XCTAssertTrue(newStore.launchAtLogin)
+    }
+
+    func testSavesHealthAlertSettings() {
+        store.healthNotificationsEnabled = true
+        store.cpuAlertThreshold = 95
+        store.diskFreeAlertThreshold = 5
+
+        let newStore = UserDefaultsStore(defaults: testDefaults)
+        XCTAssertTrue(newStore.healthNotificationsEnabled)
+        XCTAssertEqual(newStore.cpuAlertThreshold, 95)
+        XCTAssertEqual(newStore.diskFreeAlertThreshold, 5)
     }
 
     // MARK: - 发布者
