@@ -10,16 +10,23 @@ class StatusBarController: NSObject {
     private let engine: MonitorEngine
     private let settings: UserDefaultsStore
     private let historyStore: HistoryStore?
+    private let onNetworkDetailsRequested: () -> Void
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private var settingsWindow: NSWindow?
     private var moreDetailsWindowController: MoreDetailsWindowController?
     private var cancellables = Set<AnyCancellable>()
 
-    init(engine: MonitorEngine, settings: UserDefaultsStore, historyStore: HistoryStore? = nil) {
+    init(
+        engine: MonitorEngine,
+        settings: UserDefaultsStore,
+        historyStore: HistoryStore? = nil,
+        onNetworkDetailsRequested: @escaping () -> Void = {}
+    ) {
         self.engine = engine
         self.settings = settings
         self.historyStore = historyStore
+        self.onNetworkDetailsRequested = onNetworkDetailsRequested
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.popover = NSPopover()
         super.init()
@@ -212,7 +219,8 @@ class StatusBarController: NSObject {
                 engine: engine,
                 settings: settings,
                 historyStore: historyStore,
-                statusBarController: self
+                statusBarController: self,
+                onNetworkDetailsRequested: onNetworkDetailsRequested
             )
         }
         moreDetailsWindowController?.show()

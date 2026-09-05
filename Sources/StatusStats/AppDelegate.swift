@@ -7,7 +7,7 @@ import ServiceManagement
 import CoreLocation
 import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate, CLLocationManagerDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate {
     var statusBarController: StatusBarController?
     let monitorEngine = MonitorEngine()
     let settings = UserDefaultsStore()
@@ -19,9 +19,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, CLLocationManagerDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 菜单栏应用不显示Dock图标
         NSApp.setActivationPolicy(.accessory)
-        locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
-
         // 初始化历史存储
         if let store = try? SQLiteHistoryStore() {
             historyStore = store
@@ -39,7 +36,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, CLLocationManagerDelegate {
         monitorEngine.register(TemperatureMonitor(dataProvider: ProcessInfoThermalDataProvider(), timer: DispatchRefreshTimer()))
 
         // 设置菜单栏控制器
-        statusBarController = StatusBarController(engine: monitorEngine, settings: settings, historyStore: historyStore)
+        statusBarController = StatusBarController(
+            engine: monitorEngine,
+            settings: settings,
+            historyStore: historyStore,
+            onNetworkDetailsRequested: { [weak self] in
+                self?.requestLocationAccessForWiFiName()
+            }
+        )
         healthNotificationCoordinator = HealthNotificationCoordinator(engine: monitorEngine, settings: settings)
 
         // 启动监控
@@ -86,6 +90,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, CLLocationManagerDelegate {
 
     private func startMonitoring() {
         monitorEngine.startAll(interval: settings.refreshInterval, enabledMonitors: settings.enabledMonitors)
+    }
+
+    private func requestLocationAccessForWiFiName() {
+        guard locationManager.authorizationStatus == .notDetermined else { return }
+        locationManager.requestWhenInUseAuthorization()
     }
 
     private func updateLaunchAtLogin(enabled: Bool) {

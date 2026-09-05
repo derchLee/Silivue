@@ -11,11 +11,19 @@ public class MoreDetailsWindowController: NSObject, NSWindowDelegate {
     private let engine: MonitorEngine
     private let settings: UserDefaultsStore
     private let historyStore: HistoryStore?
+    private let onNetworkDetailsRequested: () -> Void
 
-    public init(engine: MonitorEngine, settings: UserDefaultsStore, historyStore: HistoryStore?, statusBarController: AnyObject? = nil) {
+    public init(
+        engine: MonitorEngine,
+        settings: UserDefaultsStore,
+        historyStore: HistoryStore?,
+        statusBarController: AnyObject? = nil,
+        onNetworkDetailsRequested: @escaping () -> Void = {}
+    ) {
         self.engine = engine
         self.settings = settings
         self.historyStore = historyStore
+        self.onNetworkDetailsRequested = onNetworkDetailsRequested
         super.init()
     }
 
@@ -29,7 +37,8 @@ public class MoreDetailsWindowController: NSObject, NSWindowDelegate {
         let contentView = MoreDetailsContainerView(
             engine: engine,
             settings: settings,
-            historyStore: historyStore
+            historyStore: historyStore,
+            onNetworkDetailsRequested: onNetworkDetailsRequested
         )
         let hostingController = NSHostingController(rootView: contentView)
 
@@ -60,6 +69,7 @@ struct MoreDetailsContainerView: View {
     @ObservedObject var engine: MonitorEngine
     let settings: SettingsStore
     let historyStore: HistoryStore?
+    let onNetworkDetailsRequested: () -> Void
 
     @State private var selectedTab = 0
 
@@ -89,7 +99,12 @@ struct MoreDetailsContainerView: View {
                             icon: tabIcon(for: i),
                             color: tabColors[i],
                             isSelected: selectedTab == i,
-                            action: { selectedTab = i }
+                            action: {
+                                selectedTab = i
+                                if i == 3 {
+                                    onNetworkDetailsRequested()
+                                }
+                            }
                         )
                     }
                     Spacer()
