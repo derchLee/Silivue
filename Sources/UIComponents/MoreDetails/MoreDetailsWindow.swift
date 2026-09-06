@@ -584,6 +584,8 @@ struct HistoryChartView24h: View {
     struct ChartDataPoint: Identifiable {
         let timestamp: Date
         let value: Double
+        var segmentID: Int = 0
+        var isIsolated: Bool = false
         var id: Date { timestamp }
 
         static func aggregate(_ points: [ChartDataPoint], interval: TimeInterval = 30) -> [ChartDataPoint] {
@@ -592,13 +594,28 @@ struct HistoryChartView24h: View {
             let buckets = Dictionary(grouping: points) { point in
                 floor(point.timestamp.timeIntervalSince1970 / interval)
             }
-            return buckets.map { bucket, values in
+            var result = buckets.map { bucket, values in
                 ChartDataPoint(
                     timestamp: Date(timeIntervalSince1970: bucket * interval),
                     value: values.reduce(0) { $0 + $1.value } / Double(values.count)
                 )
             }
             .sorted { $0.timestamp < $1.timestamp }
+            // A missing bucket breaks the line instead of implying continuous data.
+            var segmentID = 0
+            for index in result.indices {
+                if index > 0,
+                   result[index].timestamp.timeIntervalSince(result[index - 1].timestamp) > interval {
+                    segmentID += 1
+                }
+                result[index].segmentID = segmentID
+            }
+            for index in result.indices {
+                let hasPrevious = index > 0 && result[index - 1].segmentID == result[index].segmentID
+                let hasNext = index + 1 < result.count && result[index + 1].segmentID == result[index].segmentID
+                result[index].isIsolated = !hasPrevious && !hasNext
+            }
+            return result
         }
     }
 
@@ -641,12 +658,13 @@ struct HistoryChartView24h: View {
                     Chart(dataPoints) { point in
                         LineMark(
                             x: .value("Time", point.timestamp),
-                            y: .value("Value", point.value)
+                            y: .value("Value", point.value),
+                            series: .value("Segment", point.segmentID)
                         )
                         .foregroundStyle(color)
                         .interpolationMethod(.catmullRom)
 
-                        if point.id == dataPoints.last?.id {
+                        if point.isIsolated || point.id == dataPoints.last?.id {
                             PointMark(
                                 x: .value("Time", point.timestamp),
                                 y: .value("Value", point.value)
