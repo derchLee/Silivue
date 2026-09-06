@@ -12,7 +12,7 @@ Silivue is a native, lightweight, and completely free macOS menu bar system moni
 - Memory usage, cache, swap, and memory pressure
 - Network upload/download speed and connection details
 - Disk capacity, usage, and free space
-- Battery level, charging state, and health information
+- Battery level, charging state, and health information when available through public system APIs
 - macOS system thermal state
 - Quick access to macOS Activity Monitor from the details window
 - Real-time charts and local historical data
@@ -64,7 +64,6 @@ Create DMG and PKG distribution packages:
 Before distribution, configure signing in Xcode and Apple Developer using:
 
 - Bundle ID: `com.upupdays.silivue`
-- App Group: `group.com.upupdays.silivue`
 
 ## Privacy
 

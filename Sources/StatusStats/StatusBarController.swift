@@ -128,7 +128,9 @@ class StatusBarController: NSObject {
         }
 
         // Battery（无电池Mac不显示）
-        if settings.enabledMonitors.contains("battery"), let bat = engine.latestBattery, bat.healthPercent > 0 {
+        if settings.enabledMonitors.contains("battery"),
+           let bat = engine.latestBattery,
+           bat.powerSource != "No Battery" {
             switch settings.displayMode {
             case .compact:
                 parts.append("BAT \(Int(bat.chargePercent))%")

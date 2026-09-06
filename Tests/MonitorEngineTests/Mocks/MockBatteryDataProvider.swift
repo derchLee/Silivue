@@ -7,7 +7,7 @@ final class MockBatteryDataProvider: BatteryDataProvider {
     init(stubbedData: BatteryRawData = BatteryRawData(
         chargePercent: 85, isCharging: true, healthPercent: 95,
         cycleCount: 120, timeRemaining: -1, powerSource: "AC Power",
-        designCapacity: 5103, maxCapacity: 4850, amperage: 0, voltage: 12.5)) {
+        designCapacity: 5103, maxCapacity: 4850)) {
         self.stubbedData = stubbedData
     }
 

@@ -192,9 +192,10 @@ public struct LocalHealthAnalyzer {
         guard let latest = samples.compactMap(\.battery).last, latest.healthPercent > 0 else { return [] }
         let previousHealth = previous.compactMap(\.battery).last?.healthPercent
         if latest.healthPercent < 80 {
+            let cycleDetail = latest.cycleCount > 0 ? " after " + String(latest.cycleCount) + " cycles" : ""
             return [HealthEvent(timestamp: latest.timestamp, metric: .battery, severity: .warning,
                                 title: "Battery health reduced",
-                                detail: "Maximum capacity is " + String(Int(latest.healthPercent)) + "% after " + String(latest.cycleCount) + " cycles.",
+                                detail: "Maximum capacity is " + String(Int(latest.healthPercent)) + "%" + cycleDetail + ".",
                                 recommendation: "Consider battery service if runtime no longer meets your needs.")]
         }
         if let previousHealth, previousHealth - latest.healthPercent >= 2 {

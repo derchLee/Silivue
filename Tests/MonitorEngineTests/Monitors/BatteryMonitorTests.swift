@@ -116,7 +116,7 @@ final class BatteryMonitorTests: XCTestCase {
         let rawData = BatteryRawData(
             chargePercent: 72, isCharging: false, healthPercent: 88,
             cycleCount: 250, timeRemaining: 180, powerSource: "Battery Power",
-            designCapacity: 5103, maxCapacity: 4490, amperage: -1200, voltage: 11.8
+            designCapacity: 5103, maxCapacity: 4490
         )
         let sample = BatteryMonitor.computeSample(from: rawData)
 
@@ -134,7 +134,7 @@ final class BatteryMonitorTests: XCTestCase {
         let charging = BatteryRawData(
             chargePercent: 95, isCharging: true, healthPercent: 100,
             cycleCount: 10, timeRemaining: 15, powerSource: "AC Power",
-            designCapacity: 5103, maxCapacity: 5103, amperage: 800, voltage: 12.6
+            designCapacity: 5103, maxCapacity: 5103
         )
         let result = BatteryMonitor.computeSample(from: charging)
         XCTAssertTrue(result.isCharging)
@@ -143,7 +143,7 @@ final class BatteryMonitorTests: XCTestCase {
         let discharging = BatteryRawData(
             chargePercent: 50, isCharging: false, healthPercent: 90,
             cycleCount: 100, timeRemaining: 300, powerSource: "Battery Power",
-            designCapacity: 5103, maxCapacity: 4593, amperage: -1500, voltage: 11.2
+            designCapacity: 5103, maxCapacity: 4593
         )
         let result2 = BatteryMonitor.computeSample(from: discharging)
         XCTAssertFalse(result2.isCharging)

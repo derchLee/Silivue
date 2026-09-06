@@ -12,7 +12,7 @@ Silivue 是一款原生、轻量、完全免费的 macOS 菜单栏系统监控�
 - 内存使用量、缓存、交换空间和内存压力
 - 网络上传/下载速度与连接信息
 - 磁盘容量、使用率和剩余空间
-- 电池电量、充电状态与健康信息
+- 电池电量、充电状态，以及系统公开接口可用时的健康信息
 - macOS 系统热状态
 - 从详情窗口快速打开 macOS“活动监视器”
 - 实时图表与本地历史数据
@@ -64,7 +64,6 @@ swift test
 正式分发前需要在 Xcode 和 Apple Developer 后台配置对应的签名、Bundle ID 与 App Group：
 
 - Bundle ID：`com.upupdays.silivue`
-- App Group：`group.com.upupdays.silivue`
 
 ## 隐私
 

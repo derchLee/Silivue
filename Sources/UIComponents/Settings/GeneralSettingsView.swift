@@ -97,6 +97,19 @@ public struct GeneralSettingsView: View {
                     }
                 }
 
+                settingCard {
+                    HStack(spacing: 16) {
+                        Link(destination: URL(string: "https://silivue.upupdays.com/index.html")!) {
+                            Label("Privacy Policy", systemImage: "hand.raised.fill")
+                        }
+                        Link(destination: URL(string: "https://github.com/derchLee/Silivue/issues")!) {
+                            Label("Support", systemImage: "questionmark.circle.fill")
+                        }
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(TechColors.accentBlue)
+                }
+
                 Spacer()
             }
             .padding(16)

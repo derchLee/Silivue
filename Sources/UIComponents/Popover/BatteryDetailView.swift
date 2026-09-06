@@ -33,8 +33,12 @@ public struct BatteryDetailView: View {
                 if sample.timeRemaining > 0 {
                     batteryChip("Remaining", "\(sample.timeRemaining)min", TechColors.accentCyan)
                 }
-                batteryChip("Health", "\(Int(sample.healthPercent))%", healthColor)
-                batteryChip("Cycles", "\(sample.cycleCount)", TechColors.textMuted)
+                if sample.healthPercent > 0 {
+                    batteryChip("Health", "\(Int(sample.healthPercent))%", healthColor)
+                }
+                if sample.cycleCount > 0 {
+                    batteryChip("Cycles", "\(sample.cycleCount)", TechColors.textMuted)
+                }
             }
 
             if !healthTip.isEmpty {

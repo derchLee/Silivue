@@ -13,6 +13,5 @@ final class IOKitBatteryDataProviderIntegrationTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(data.healthPercent, 0)
         XCTAssertGreaterThanOrEqual(data.timeRemaining, -1)
         XCTAssertFalse(data.powerSource.isEmpty)
-        XCTAssertGreaterThanOrEqual(data.voltage, 0)
     }
 }

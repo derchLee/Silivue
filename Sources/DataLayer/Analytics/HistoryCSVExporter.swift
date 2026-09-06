@@ -18,7 +18,11 @@ public enum HistoryCSVExporter {
         if let memory = sample.memory { return [row(timestamp, "Memory", memory.usagePercent, "%", "pressure=\(memory.pressureLevel.rawValue); swap=\(memory.swapUsedBytes)")] }
         if let network = sample.network { return [row(timestamp, "Network upload", network.uploadBytesPerSec, "B/s", ""), row(timestamp, "Network download", network.downloadBytesPerSec, "B/s", "")] }
         if let disk = sample.disk { return disk.volumes.map { row(timestamp, "Disk", $0.usagePercent, "%", "volume=\($0.name); mount=\($0.mountPoint)") } }
-        if let battery = sample.battery { return [row(timestamp, "Battery health", battery.healthPercent, "%", "charge=\(battery.chargePercent); cycles=\(battery.cycleCount); source=\(battery.powerSource)")] }
+        if let battery = sample.battery {
+            var details = "charge=\(battery.chargePercent); source=\(battery.powerSource)"
+            if battery.cycleCount > 0 { details += "; cycles=\(battery.cycleCount)" }
+            return [row(timestamp, "Battery health", battery.healthPercent, "%", details)]
+        }
         if let thermal = sample.temperature { return [row(timestamp, "Thermal", Double(thermalRank(thermal.thermalState)), "state", thermal.thermalState.rawValue)] }
         return []
     }
