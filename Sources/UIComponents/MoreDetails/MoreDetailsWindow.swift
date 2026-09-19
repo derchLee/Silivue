@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 import Charts
 import MonitorEngine
@@ -12,6 +13,7 @@ public class MoreDetailsWindowController: NSObject, NSWindowDelegate {
     private let settings: UserDefaultsStore
     private let historyStore: HistoryStore?
     private let onNetworkDetailsRequested: () -> Void
+    private var cancellables = Set<AnyCancellable>()
 
     public init(
         engine: MonitorEngine,
@@ -25,6 +27,15 @@ public class MoreDetailsWindowController: NSObject, NSWindowDelegate {
         self.historyStore = historyStore
         self.onNetworkDetailsRequested = onNetworkDetailsRequested
         super.init()
+        settings.$language
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                DispatchQueue.main.async {
+                    self?.window?.title = AppLocalization.text("Silivue — Details")
+                }
+            }
+            .store(in: &cancellables)
     }
 
     public func show() {
@@ -43,7 +54,7 @@ public class MoreDetailsWindowController: NSObject, NSWindowDelegate {
         let hostingController = NSHostingController(rootView: contentView)
 
         let window = NSWindow(contentViewController: hostingController)
-        window.title = "Silivue — Details"
+        window.title = AppLocalization.text("Silivue — Details")
         window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         window.setContentSize(NSSize(width: 750, height: 500))
         window.center()
@@ -67,15 +78,16 @@ public class MoreDetailsWindowController: NSObject, NSWindowDelegate {
 
 struct MoreDetailsContainerView: View {
     @ObservedObject var engine: MonitorEngine
-    let settings: SettingsStore
+    @ObservedObject var settings: UserDefaultsStore
     let historyStore: HistoryStore?
     let onNetworkDetailsRequested: () -> Void
 
     @State private var selectedTab = 0
 
-    private let tabs = ["Health", "CPU", "Memory", "Network", "Disk"]
+    private var tabs: [String] { ["Health", "Replay", "CPU", "Memory", "Network", "Disk"].map(AppLocalization.text) }
     private let tabColors: [Color] = [
         TechColors.accentGreen,
+        TechColors.accentOrange,
         TechColors.accentCyan,
         TechColors.accentPurple,
         TechColors.accentGreen,
@@ -101,7 +113,7 @@ struct MoreDetailsContainerView: View {
                             isSelected: selectedTab == i,
                             action: {
                                 selectedTab = i
-                                if i == 3 {
+                                if i == 4 {
                                     onNetworkDetailsRequested()
                                 }
                             }
@@ -139,17 +151,19 @@ struct MoreDetailsContainerView: View {
                 Group {
                     switch selectedTab {
                     case 0: HealthDashboardView(engine: engine, historyStore: historyStore)
-                    case 1: CPUMoreTab(engine: engine, historyStore: historyStore)
-                    case 2: MemoryMoreTab(engine: engine, historyStore: historyStore)
-                    case 3: NetworkMoreTab(engine: engine, historyStore: historyStore)
-                    case 4: DiskMoreTab(engine: engine)
+                    case 1: PerformanceReplayView(historyStore: historyStore)
+                    case 2: CPUMoreTab(engine: engine, historyStore: historyStore)
+                    case 3: MemoryMoreTab(engine: engine, historyStore: historyStore)
+                    case 4: NetworkMoreTab(engine: engine, historyStore: historyStore)
+                    case 5: DiskMoreTab(engine: engine)
                     default: EmptyView()
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .id(settings.language)
             }
         }
-        .environment(\.locale, Locale(identifier: "en_US"))
+        .environment(\.locale, Locale(identifier: settings.language.localeIdentifier))
         .preferredColorScheme(.dark)
     }
 
@@ -182,10 +196,11 @@ struct MoreDetailsContainerView: View {
     private func tabIcon(for index: Int) -> String {
         switch index {
         case 0: return "heart.text.square"
-        case 1: return "cpu"
-        case 2: return "memorychip"
-        case 3: return "network"
-        case 4: return "internaldrive"
+        case 1: return "clock.arrow.circlepath"
+        case 2: return "cpu"
+        case 3: return "memorychip"
+        case 4: return "network"
+        case 5: return "internaldrive"
         default: return "chart.bar"
         }
     }
@@ -267,7 +282,7 @@ struct CPUMoreTab: View {
             Text(value)
                 .font(.system(size: 14, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 9))
                 .foregroundColor(TechColors.textMuted)
         }
@@ -442,7 +457,7 @@ struct NetworkMoreTab: View {
                 Image(systemName: icon)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(color)
-                Text(label)
+                Text(LocalizedStringKey(label))
                     .font(.system(size: 9))
                     .foregroundColor(TechColors.textMuted)
             }
@@ -465,7 +480,7 @@ struct NetworkMoreTab: View {
 
     private func statMiniCard(label: String, value: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 9))
                 .foregroundColor(TechColors.textMuted)
             GlowLabel(value, color: color, size: 13)
@@ -538,11 +553,11 @@ struct DiskMoreTab: View {
             )
 
             HStack {
-                Text("\(Int(volume.usagePercent))% used")
+                Text(AppLocalization.format("%d%% used", Int(volume.usagePercent)))
                     .font(.system(size: 9))
                     .foregroundColor(TechColors.textMuted)
                 Spacer()
-                Text("\(ByteFormatter.format(volume.totalBytes &- volume.usedBytes)) free")
+                Text(AppLocalization.format("%@ free", ByteFormatter.format(volume.totalBytes &- volume.usedBytes)))
                     .font(.system(size: 9))
                     .foregroundColor(TechColors.textMuted)
             }
@@ -678,7 +693,7 @@ struct HistoryChartView24h: View {
                         AxisMarks(values: [domainStart] + xAxisValues + [domainEnd]) { value in
                             if let date = value.as(Date.self) {
                                 let hoursAgo = abs(Int(date.timeIntervalSinceNow / 3600))
-                                let label = hoursAgo == 0 ? "now" : "\(hoursAgo)h"
+                                let label = hoursAgo == 0 ? AppLocalization.text("now") : AppLocalization.format("%dh", hoursAgo)
                                 AxisValueLabel {
                                     Text(label)
                                         .font(.system(size: 9, design: .monospaced))
@@ -762,7 +777,7 @@ private func metricMainCard(title: String, icon: String, iconColor: Color, mainV
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(iconColor)
             }
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(TechColors.textSecondary)
             Spacer()
@@ -778,7 +793,7 @@ private func metricMainCard(title: String, icon: String, iconColor: Color, mainV
                         Text(item.1)
                             .font(.system(size: 12, weight: .medium, design: .monospaced))
                             .foregroundColor(TechColors.textPrimary)
-                        Text(item.0)
+                        Text(LocalizedStringKey(item.0))
                             .font(.system(size: 9))
                             .foregroundColor(TechColors.textMuted)
                     }
@@ -810,7 +825,7 @@ private func chartCard(title: String, color: Color, @ViewBuilder content: () -> 
                 .fill(color)
                 .frame(width: 6, height: 6)
                 .shadow(color: color.opacity(0.8), radius: 3)
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundColor(TechColors.textSecondary)
             Spacer()
@@ -836,7 +851,7 @@ private func emptyState(_ message: String) -> some View {
         Image(systemName: "exclamationmark.triangle")
             .font(.system(size: 24))
             .foregroundColor(TechColors.textMuted)
-        Text(message)
+        Text(LocalizedStringKey(message))
             .font(.system(size: 12))
             .foregroundColor(TechColors.textMuted)
         Spacer()

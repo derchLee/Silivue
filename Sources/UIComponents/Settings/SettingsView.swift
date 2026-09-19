@@ -8,11 +8,13 @@ public struct SettingsView: View {
 
     @State private var selectedTab = 0
 
-    private let tabItems = [
-        ("General", "gearshape.fill", TechColors.accentCyan),
-        ("Display", "paintbrush.fill", TechColors.accentPurple),
-        ("History", "clock.arrow.circlepath", TechColors.accentGreen)
-    ]
+    private var tabItems: [(String, String, Color)] {
+        [
+            (AppLocalization.text("General"), "gearshape.fill", TechColors.accentCyan),
+            (AppLocalization.text("Display"), "paintbrush.fill", TechColors.accentPurple),
+            (AppLocalization.text("History"), "clock.arrow.circlepath", TechColors.accentGreen)
+        ]
+    }
 
     public init(settings: UserDefaultsStore, historyStore: HistoryStore? = nil) {
         self.settings = settings
@@ -59,7 +61,7 @@ public struct SettingsView: View {
         // Native pickers and menus must match the settings panel's dark surfaces,
         // including when macOS itself is using Light appearance.
         .preferredColorScheme(.dark)
-        .environment(\.locale, Locale(identifier: "en_US"))
+        .environment(\.locale, Locale(identifier: settings.language.localeIdentifier))
     }
 
     private func tabButton(title: String, icon: String, color: Color, index: Int) -> some View {

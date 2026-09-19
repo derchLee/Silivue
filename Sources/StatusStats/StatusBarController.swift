@@ -39,7 +39,8 @@ class StatusBarController: NSObject {
                 settings: settings,
                 historyStore: historyStore,
                 onSettingsTapped: { [weak self] in self?.openSettings() },
-                onMoreTapped: { [weak self] in self?.openMoreDetails() }
+                onMoreTapped: { [weak self] in self?.openMoreDetails() },
+                onQuitTapped: { [weak self] in self?.quitApplication() }
             )
         )
 
@@ -84,11 +85,34 @@ class StatusBarController: NSObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.updateButtonTitle() }
             .store(in: &cancellables)
+
+        settings.$language
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                DispatchQueue.main.async { self?.updateButtonTitle() }
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - 菜单栏文字更新
 
     private func updateButtonTitle() {
+        if settings.displayMode == .quiet {
+            let hasIssue = engine.latestMemory?.pressureLevel != .normal
+                || engine.latestTemperature?.thermalState == .serious
+                || engine.latestTemperature?.thermalState == .critical
+            let title = hasIssue ? "●" : "◦"
+            statusItem.button?.attributedTitle = NSAttributedString(
+                string: title,
+                attributes: [
+                    .font: NSFont.monospacedSystemFont(ofSize: 14, weight: .bold),
+                    .foregroundColor: hasIssue ? NSColor.systemOrange : NSColor.secondaryLabelColor
+                ]
+            )
+            statusItem.button?.toolTip = AppLocalization.text(hasIssue ? "Silivue: attention needed" : "Silivue: system normal")
+            return
+        }
         var parts: [String] = []
 
         // CPU
@@ -100,6 +124,8 @@ class StatusBarController: NSObject {
                 parts.append("⬢\(Int(cpu.usagePercent))")
             case .numeric:
                 parts.append("CPU:\(Int(cpu.usagePercent))%")
+            case .quiet:
+                break
             }
         }
 
@@ -112,6 +138,8 @@ class StatusBarController: NSObject {
                 parts.append("⬡\(Int(mem.usagePercent))")
             case .numeric:
                 parts.append("RAM:\(ByteFormatter.format(mem.usedBytes))")
+            case .quiet:
+                break
             }
         }
 
@@ -124,6 +152,8 @@ class StatusBarController: NSObject {
                 parts.append("⬆\(ByteFormatter.formatSpeed(net.uploadBytesPerSec))")
             case .numeric:
                 parts.append("↑\(ByteFormatter.formatSpeed(net.uploadBytesPerSec)) ↓\(ByteFormatter.formatSpeed(net.downloadBytesPerSec))")
+            case .quiet:
+                break
             }
         }
 
@@ -138,6 +168,8 @@ class StatusBarController: NSObject {
                 parts.append(bat.isCharging ? "BAT+\(Int(bat.chargePercent))" : "BAT\(Int(bat.chargePercent))")
             case .numeric:
                 parts.append("BAT:\(Int(bat.chargePercent))%")
+            case .quiet:
+                break
             }
         }
 
@@ -157,6 +189,8 @@ class StatusBarController: NSObject {
                 parts.append("TMP\(state)")
             case .numeric:
                 parts.append("TEMP:\(state)")
+            case .quiet:
+                break
             }
         }
 
@@ -226,6 +260,11 @@ class StatusBarController: NSObject {
             )
         }
         moreDetailsWindowController?.show()
+    }
+
+    private func quitApplication() {
+        popover.performClose(nil)
+        NSApp.terminate(nil)
     }
 }
 

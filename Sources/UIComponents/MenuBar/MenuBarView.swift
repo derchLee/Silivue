@@ -48,6 +48,8 @@ public struct MenuBarView: View {
             IconMetricView(systemName: icon, color: color)
         case .numeric:
             NumericMetricView(label: label, value: numericValue, color: color)
+        case .quiet:
+            EmptyView()
         }
     }
 
@@ -78,6 +80,8 @@ public struct MenuBarView: View {
                     .font(MetricFonts.menuBar)
                     .foregroundColor(MetricColors.networkDown)
             }
+        case .quiet:
+            EmptyView()
         }
     }
 }

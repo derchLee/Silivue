@@ -10,6 +10,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.displayMode, .compact)
         XCTAssertEqual(settings.enabledMonitors, ["cpu", "memory", "network", "disk", "battery", "temperature"])
         XCTAssertFalse(settings.launchAtLogin)
+        XCTAssertEqual(settings.language, .english)
     }
 
     func testEquatable() {

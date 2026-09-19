@@ -18,6 +18,24 @@ public struct GeneralSettingsView: View {
                 // 标题区
                 sectionHeader("General", icon: "gearshape.fill", color: TechColors.accentCyan)
 
+                settingCard {
+                    HStack {
+                        Text("Language")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(TechColors.textPrimary)
+                        Spacer()
+                        Picker("Language", selection: $settings.language) {
+                            ForEach(AppLanguage.allCases) { language in
+                                Text(language.displayName).tag(language)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        .controlSize(.regular)
+                        .frame(width: 140)
+                    }
+                }
+
                 // 刷新频率
                 settingCard {
                     HStack {
@@ -99,7 +117,7 @@ public struct GeneralSettingsView: View {
 
                 settingCard {
                     HStack(spacing: 16) {
-                        Link(destination: URL(string: "https://silivue.upupdays.com/index.html")!) {
+                        Link(destination: URL(string: "https://silivue.upupdays.com/index.html?lang=\(settings.language.rawValue)")!) {
                             Label("Privacy Policy", systemImage: "hand.raised.fill")
                         }
                         Link(destination: URL(string: "https://github.com/derchLee/Silivue/issues")!) {
@@ -126,7 +144,7 @@ public struct GeneralSettingsView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(color)
             }
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(TechColors.textPrimary)
             Spacer()

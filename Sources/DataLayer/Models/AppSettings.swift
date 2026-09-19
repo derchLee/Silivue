@@ -8,6 +8,7 @@ public struct AppSettings: Equatable {
     public var healthNotificationsEnabled: Bool
     public var cpuAlertThreshold: Double
     public var diskFreeAlertThreshold: Double
+    public var language: AppLanguage
 
     public init(refreshInterval: RefreshInterval = .twoSeconds,
                 displayMode: DisplayMode = .compact,
@@ -15,7 +16,8 @@ public struct AppSettings: Equatable {
                 launchAtLogin: Bool = false,
                 healthNotificationsEnabled: Bool = false,
                 cpuAlertThreshold: Double = 85,
-                diskFreeAlertThreshold: Double = 10) {
+                diskFreeAlertThreshold: Double = 10,
+                language: AppLanguage = .english) {
         self.refreshInterval = refreshInterval
         self.displayMode = displayMode
         self.enabledMonitors = enabledMonitors
@@ -23,5 +25,6 @@ public struct AppSettings: Equatable {
         self.healthNotificationsEnabled = healthNotificationsEnabled
         self.cpuAlertThreshold = cpuAlertThreshold
         self.diskFreeAlertThreshold = diskFreeAlertThreshold
+        self.language = language
     }
 }

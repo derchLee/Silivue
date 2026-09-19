@@ -94,7 +94,7 @@ public struct HistorySettingsView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(color)
             }
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(TechColors.textPrimary)
             Spacer()
@@ -106,7 +106,7 @@ public struct HistorySettingsView: View {
             Circle()
                 .fill(color)
                 .frame(width: 6, height: 6)
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 11))
                 .foregroundColor(TechColors.textSecondary)
             Spacer()

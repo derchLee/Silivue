@@ -11,6 +11,7 @@ final class MockSettingsStore: SettingsStore {
     var healthNotificationsEnabled: Bool = false
     var cpuAlertThreshold: Double = 85
     var diskFreeAlertThreshold: Double = 10
+    var language: AppLanguage = .english
 
     let subject = PassthroughSubject<AppSettings, Never>()
     var settingsChanged: AnyPublisher<AppSettings, Never> {

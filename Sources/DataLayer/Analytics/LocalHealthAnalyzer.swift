@@ -6,8 +6,8 @@ public enum HealthPeriod: String, CaseIterable, Identifiable {
     case week
 
     public var id: String { rawValue }
-    public var title: String { self == .day ? "24 Hours" : "7 Days" }
-    public var comparisonTitle: String { self == .day ? "vs previous 24h" : "vs previous 7d" }
+    public var title: String { self == .day ? AppLocalization.text("24 Hours") : AppLocalization.text("7 Days") }
+    public var comparisonTitle: String { self == .day ? AppLocalization.text("vs previous 24h") : AppLocalization.text("vs previous 7d") }
     public var duration: TimeInterval { self == .day ? 86_400 : 604_800 }
 }
 
@@ -28,6 +28,8 @@ public enum HealthMetric: String, CaseIterable {
     case disk = "Disk"
     case battery = "Battery"
     case thermal = "Thermal"
+
+    public var displayName: String { AppLocalization.text(rawValue) }
 }
 
 public struct HealthEvent: Identifiable {
@@ -110,13 +112,13 @@ public struct LocalHealthAnalyzer {
         let score = max(0, 100 - min(60, criticalCount * 18) - min(30, warningCount * 7))
         let summary: String
         if criticalCount > 0 {
-            summary = "Immediate attention recommended"
+            summary = AppLocalization.text("Immediate attention recommended")
         } else if warningCount > 0 {
-            summary = "A few items may need attention"
+            summary = AppLocalization.text("A few items may need attention")
         } else if comparisons.isEmpty {
-            summary = "Collecting enough data for a health summary"
+            summary = AppLocalization.text("Collecting enough data for a health summary")
         } else {
-            summary = "System metrics stayed within normal ranges"
+            summary = AppLocalization.text("System metrics stayed within normal ranges")
         }
         return HealthReport(
             score: score,
@@ -137,9 +139,9 @@ public struct LocalHealthAnalyzer {
         if sustained >= 120 {
             return [HealthEvent(timestamp: peak.0, metric: .cpu,
                                 severity: peak.1 >= 95 ? .critical : .warning,
-                                title: "Sustained high CPU",
-                                detail: "CPU stayed above 80% for " + durationText(sustained) + "; peak " + String(Int(peak.1)) + "%.",
-                                recommendation: "Open Activity Monitor to identify the busiest app.")]
+                                title: AppLocalization.text("Sustained high CPU"),
+                                detail: AppLocalization.format("CPU stayed above 80%% for %@; peak %d%%.", durationText(sustained), Int(peak.1)),
+                                recommendation: AppLocalization.text("Open Activity Monitor to identify the busiest app."))]
         }
         return []
     }
@@ -149,15 +151,15 @@ public struct LocalHealthAnalyzer {
         guard let worst = memory.max(by: { severity(of: $0.pressureLevel) < severity(of: $1.pressureLevel) }) else { return [] }
         if worst.pressureLevel == .critical {
             return [HealthEvent(timestamp: worst.timestamp, metric: .memory, severity: .critical,
-                                title: "Critical memory pressure",
-                                detail: "macOS reported critical memory pressure; swap reached " + byteText(worst.swapUsedBytes) + ".",
-                                recommendation: "Close memory-heavy apps or restart apps with growing usage.")]
+                                title: AppLocalization.text("Critical memory pressure"),
+                                detail: AppLocalization.format("macOS reported critical memory pressure; swap reached %@.", byteText(worst.swapUsedBytes)),
+                                recommendation: AppLocalization.text("Close memory-heavy apps or restart apps with growing usage."))]
         }
         if worst.pressureLevel == .warning || memory.contains(where: { $0.usagePercent >= 90 }) {
             return [HealthEvent(timestamp: worst.timestamp, metric: .memory, severity: .warning,
-                                title: "Elevated memory pressure",
-                                detail: "Memory usage reached " + String(Int(memory.map(\.usagePercent).max() ?? 0)) + "%.",
-                                recommendation: "Review memory use in Activity Monitor if the system feels slow.")]
+                                title: AppLocalization.text("Elevated memory pressure"),
+                                detail: AppLocalization.format("Memory usage reached %d%%.", Int(memory.map(\.usagePercent).max() ?? 0)),
+                                recommendation: AppLocalization.text("Review memory use in Activity Monitor if the system feels slow."))]
         }
         return []
     }
@@ -173,9 +175,9 @@ public struct LocalHealthAnalyzer {
         guard let peak = values.max(by: { $0.1 < $1.1 }), peak.1 >= 1_048_576,
               peak.1 >= max(median * 5, 1_048_576) else { return [] }
         return [HealthEvent(timestamp: peak.0, metric: .network, severity: .info,
-                            title: "Network traffic spike",
-                            detail: "Combined transfer rate peaked at " + speedText(peak.1) + ".",
-                            recommendation: "This can be normal during downloads, backups, or video calls.")]
+                            title: AppLocalization.text("Network traffic spike"),
+                            detail: AppLocalization.format("Combined transfer rate peaked at %@.", speedText(peak.1)),
+                            recommendation: AppLocalization.text("This can be normal during downloads, backups, or video calls."))]
     }
 
     private func diskEvents(_ samples: [AnyMonitorSample]) -> [HealthEvent] {
@@ -183,26 +185,26 @@ public struct LocalHealthAnalyzer {
         guard let fullest = volumes.max(by: { $0.usagePercent < $1.usagePercent }), fullest.usagePercent >= 80 else { return [] }
         return [HealthEvent(timestamp: samples.last?.timestamp ?? Date(), metric: .disk,
                             severity: fullest.usagePercent >= 90 ? .critical : .warning,
-                            title: "Low disk space",
-                            detail: (fullest.name.isEmpty ? fullest.mountPoint : fullest.name) + " is " + String(Int(fullest.usagePercent)) + "% full.",
-                            recommendation: "Keep at least 10–20% free for updates, swap, and temporary files.")]
+                            title: AppLocalization.text("Low disk space"),
+                            detail: AppLocalization.format("%@ is %d%% full.", fullest.name.isEmpty ? fullest.mountPoint : fullest.name, Int(fullest.usagePercent)),
+                            recommendation: AppLocalization.text("Keep at least 10–20%% free for updates, swap, and temporary files."))]
     }
 
     private func batteryEvents(_ samples: [AnyMonitorSample], previous: [AnyMonitorSample]) -> [HealthEvent] {
         guard let latest = samples.compactMap(\.battery).last, latest.healthPercent > 0 else { return [] }
         let previousHealth = previous.compactMap(\.battery).last?.healthPercent
         if latest.healthPercent < 80 {
-            let cycleDetail = latest.cycleCount > 0 ? " after " + String(latest.cycleCount) + " cycles" : ""
+            let cycleDetail = latest.cycleCount > 0 ? AppLocalization.format(" after %d cycles", latest.cycleCount) : ""
             return [HealthEvent(timestamp: latest.timestamp, metric: .battery, severity: .warning,
-                                title: "Battery health reduced",
-                                detail: "Maximum capacity is " + String(Int(latest.healthPercent)) + "%" + cycleDetail + ".",
-                                recommendation: "Consider battery service if runtime no longer meets your needs.")]
+                                title: AppLocalization.text("Battery health reduced"),
+                                detail: AppLocalization.format("Maximum capacity is %d%%%@.", Int(latest.healthPercent), cycleDetail),
+                                recommendation: AppLocalization.text("Consider battery service if runtime no longer meets your needs."))]
         }
         if let previousHealth, previousHealth - latest.healthPercent >= 2 {
             return [HealthEvent(timestamp: latest.timestamp, metric: .battery, severity: .info,
-                                title: "Battery health changed",
-                                detail: "Maximum capacity decreased by " + String(Int(previousHealth - latest.healthPercent)) + " points.",
-                                recommendation: "Watch the trend over several weeks before taking action.")]
+                                title: AppLocalization.text("Battery health changed"),
+                                detail: AppLocalization.format("Maximum capacity decreased by %d points.", Int(previousHealth - latest.healthPercent)),
+                                recommendation: AppLocalization.text("Watch the trend over several weeks before taking action."))]
         }
         return []
     }
@@ -213,9 +215,9 @@ public struct LocalHealthAnalyzer {
               thermalRank(worst.thermalState) >= 2 else { return [] }
         return [HealthEvent(timestamp: worst.timestamp, metric: .thermal,
                             severity: worst.thermalState == .critical ? .critical : .warning,
-                            title: "Thermal pressure detected",
-                            detail: "macOS reported " + worst.thermalState.rawValue + " thermal pressure.",
-                            recommendation: "Reduce heavy workloads and improve airflow until the Mac cools down.")]
+                            title: AppLocalization.text("Thermal pressure detected"),
+                            detail: AppLocalization.format("macOS reported %@ thermal pressure.", worst.thermalState.rawValue),
+                            recommendation: AppLocalization.text("Reduce heavy workloads and improve airflow until the Mac cools down."))]
     }
 
     private func makeComparisons(current: [String: [AnyMonitorSample]], previous: [String: [AnyMonitorSample]]) -> [MetricComparison] {
@@ -265,7 +267,7 @@ public struct LocalHealthAnalyzer {
     }
     private func average(_ values: [Double]) -> Double { values.reduce(0, +) / Double(values.count) }
     private func monitorID(for metric: HealthMetric) -> String { metric == .thermal ? "temperature" : metric.rawValue.lowercased() }
-    private func durationText(_ seconds: TimeInterval) -> String { seconds >= 3600 ? String(format: "%.1f h", seconds / 3600) : String(max(2, Int(seconds / 60))) + " min" }
+    private func durationText(_ seconds: TimeInterval) -> String { seconds >= 3600 ? AppLocalization.format("%.1f h", seconds / 3600) : AppLocalization.format("%d min", max(2, Int(seconds / 60))) }
     private func byteText(_ bytes: UInt64) -> String { String(format: "%.1f GB", Double(bytes) / 1_073_741_824) }
     private func speedText(_ bytes: Double) -> String { bytes >= 1_048_576 ? String(format: "%.1f MB/s", bytes / 1_048_576) : String(format: "%.0f KB/s", bytes / 1024) }
 }

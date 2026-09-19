@@ -78,7 +78,7 @@
       box-shadow: 0 0 32px rgba(27, 220, 244, 0.1);
     }
 
-    .language-nav { display: flex; gap: 8px; }
+    .language-nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
     .language-nav button {
       border: 1px solid var(--line);
@@ -234,12 +234,14 @@
       <nav class="language-nav" aria-label="Language">
         <button type="button" data-language-button="en" aria-selected="true">English</button>
         <button type="button" data-language-button="zh" aria-selected="false">简体中文</button>
+        <button type="button" data-language-button="ko" aria-selected="false">한국어</button>
+        <button type="button" data-language-button="de" aria-selected="false">Deutsch</button>
       </nav>
     </header>
 
     <div data-language-panel="en">
       <header class="hero">
-        <p class="eyebrow">Privacy policy · Effective September 6, 2026</p>
+        <p class="eyebrow">Privacy policy · Effective September 13, 2026</p>
         <h1>Your Mac’s data stays on your Mac.</h1>
         <p class="lede">Silivue is designed to monitor system activity without creating an account, profiling you, or sending monitoring data to the developer.</p>
       </header>
@@ -268,7 +270,8 @@
             <li>battery charge, power source, and health information when available through public macOS interfaces; and</li>
             <li>the macOS system thermal state.</li>
           </ul>
-          <p>This information is used to display current metrics and historical charts, create on-device health summaries and anomaly explanations, and trigger optional local notifications inside Silivue. It is not transmitted to the developer.</p>
+          <p>If you open Performance Replay, Silivue may also use the public bundle identifiers of currently running applications to classify broad workload context, such as an IDE, terminal, local AI runtime, or container environment. This classification is performed only on your Mac, is shown as context rather than an attribution of resource use, and does not include process names, command contents, file paths, account information, or network destinations.</p>
+          <p>This information is used to display current metrics and historical charts, create on-device health summaries and anomaly explanations, provide local workload context, and trigger optional local notifications inside Silivue. It is not transmitted to the developer.</p>
         </section>
 
         <section>
@@ -331,7 +334,7 @@
 
     <div data-language-panel="zh" lang="zh-Hans" hidden>
       <header class="hero">
-        <p class="eyebrow">隐私政策 · 生效日期：2026 年 9 月 6 日</p>
+        <p class="eyebrow">隐私政策 · 生效日期：2026 年 9 月 13 日</p>
         <h1>您的 Mac 数据始终留在您的 Mac 上。</h1>
         <p class="lede">Silivue 在不创建账号、不建立用户画像、也不向开发者发送监控数据的前提下提供系统监控功能。</p>
       </header>
@@ -360,7 +363,8 @@
             <li>通过 macOS 公开接口可用时的电池电量、电源和健康信息；</li>
             <li>macOS 系统热状态。</li>
           </ul>
-          <p>这些信息仅用于在 Silivue 中显示实时指标和历史图表、在设备本地生成健康摘要与异常解释，以及触发您主动启用的本地通知，不会传输给开发者。</p>
+          <p>当您打开“Performance Replay”时，Silivue 还可能使用当前运行应用的公开 Bundle 标识，将工作负载归类为 IDE、终端、本地 AI 运行时或容器环境等宽泛上下文。此分类仅在您的 Mac 上进行，仅用于提供上下文而非归因资源占用；不会包含进程名称、命令内容、文件路径、账号信息或网络目标。</p>
+          <p>这些信息仅用于在 Silivue 中显示实时指标和历史图表、在设备本地生成健康摘要与异常解释、提供本地工作负载上下文，以及触发您主动启用的本地通知，不会传输给开发者。</p>
         </section>
 
         <section>
@@ -421,6 +425,120 @@
       </article>
     </div>
 
+    <div data-language-panel="ko" lang="ko" hidden>
+      <header class="hero">
+        <p class="eyebrow">개인정보 처리방침 · 시행일: 2026년 9월 13일</p>
+        <h1>Mac의 데이터는 Mac에만 남습니다.</h1>
+        <p class="lede">Silivue는 계정을 만들거나 사용자를 프로파일링하지 않으며, 시스템 모니터링 데이터를 개발자에게 전송하지 않습니다.</p>
+      </header>
+      <div class="summary" aria-label="개인정보 보호 요약">
+        <div><strong>계정 불필요</strong><span>가입이나 신원 프로필이 없습니다</span></div>
+        <div><strong>추적 없음</strong><span>광고 및 제3자 분석 SDK가 없습니다</span></div>
+        <div><strong>로컬 기록</strong><span>모니터링 기록은 Mac에만 저장됩니다</span></div>
+      </div>
+      <article>
+        <section>
+          <h2>1. 적용 범위</h2>
+          <p>본 개인정보 처리방침은 Silivue(이하 “Silivue”, “앱” 또는 “당사”)가 macOS용 Silivue 앱 사용 중 정보를 처리하는 방식을 설명합니다.</p>
+          <div class="callout"><strong>요약:</strong> Silivue는 시스템 모니터링 데이터를 당사에 전송하지 않습니다. 앱은 시스템 정보를 읽고 설정과 기록을 사용자의 Mac에 로컬로 저장합니다.</div>
+        </section>
+        <section>
+          <h2>2. Mac에서 처리되는 정보</h2>
+          <p>Silivue는 기능 제공을 위해 다음 정보를 기기에서 읽고 처리할 수 있습니다.</p>
+          <ul>
+            <li>CPU 활동 및 전체 코어 수</li>
+            <li>메모리 사용량, 압력, 압축, 캐시 및 스왑 정보</li>
+            <li>네트워크 전송 속도, 인터페이스 정보, 로컬 네트워크 정보 및 권한이 부여된 경우 연결된 Wi‑Fi 이름</li>
+            <li>디스크 용량, 사용량 및 여유 공간</li>
+            <li>macOS 공개 인터페이스에서 제공되는 배터리 충전량, 전원 및 상태 정보</li>
+            <li>macOS 시스템 발열 상태</li>
+          </ul>
+          <p>Performance Replay를 열면 Silivue는 실행 중인 앱의 공개 번들 식별자를 이용해 IDE, 터미널, 로컬 AI 런타임, 컨테이너 환경과 같은 넓은 범주의 작업 컨텍스트를 분류할 수 있습니다. 이 분류는 Mac에서만 수행되며 리소스 사용 원인으로 단정하지 않습니다. 프로세스 이름, 명령 내용, 파일 경로, 계정 정보 또는 네트워크 대상은 포함하지 않습니다.</p>
+          <p>이 정보는 현재 지표와 기록 차트 표시, 기기 내 상태 요약 및 이상 설명 생성, 로컬 작업 컨텍스트 제공, 사용자가 선택한 로컬 알림 전송에만 사용되며 개발자에게 전송되지 않습니다.</p>
+        </section>
+        <section>
+          <h2>3. 로컬 저장 및 보관</h2>
+          <p>Silivue는 macOS 사용자 기본 설정에 환경설정을 저장하고 Mac의 응용 프로그램 지원 저장소 내 로컬 데이터베이스에 모니터링 샘플을 보관합니다. 앱은 시작할 때 30일이 지난 모니터링 샘플을 자동으로 삭제합니다.</p>
+          <p>Silivue의 기록 설정에서 오래된 기록을 정리하거나 저장된 모든 기록을 삭제할 수 있습니다. 앱을 제거해도 모든 응용 프로그램 지원 파일이 자동으로 삭제되지 않을 수 있으며, 사용자가 Silivue의 로컬 지원 데이터를 직접 삭제할 수도 있습니다.</p>
+          <p>CSV 내보내기를 선택하면 Silivue는 macOS 저장 패널에서 사용자가 지정한 위치에 선택된 기록을 기록합니다. Silivue는 내보낸 파일을 업로드하거나 수신하지 않습니다.</p>
+        </section>
+        <section>
+          <h2>4. 위치 권한 및 Wi‑Fi 이름</h2>
+          <p>macOS는 연결된 Wi‑Fi 이름에 대한 접근을 위치 서비스 권한으로 제한합니다. 따라서 Silivue는 현재 Wi‑Fi 이름을 표시하기 위해 위치 권한을 요청할 수 있습니다.</p>
+          <p>Silivue는 사용자의 지리 좌표를 요청, 사용, 저장 또는 전송하지 않습니다. 위치 권한을 거부해도 다른 모니터링 기능은 계속 작동하지만 Wi‑Fi 이름은 표시되지 않을 수 있습니다. 권한은 macOS 시스템 설정에서 언제든지 변경할 수 있습니다.</p>
+        </section>
+        <section>
+          <h2>5. 당사가 수집하는 데이터</h2>
+          <p>Silivue는 앱에서 개인정보나 시스템 모니터링 데이터를 수집하지 않습니다. 현재 버전에는 다음 항목이 없습니다.</p>
+          <ul><li>개발자가 운영하는 분석 또는 원격 측정</li><li>광고 SDK 또는 앱 간 추적</li><li>계정, 클라우드 동기화 또는 원격 저장소</li><li>앱 내 구입 또는 구독</li></ul>
+          <p>Apple은 자체 정책과 사용자의 기기 설정에 따라 App Store 다운로드, 구입, 진단 또는 분석 정보를 별도로 처리할 수 있습니다. 이 처리는 Silivue가 아닌 Apple이 관리합니다.</p>
+        </section>
+        <section><h2>6. 공유 및 판매</h2><p>Silivue는 개인정보나 모니터링 데이터를 수신하지 않으므로 광고주, 데이터 중개업체 또는 기타 제3자에게 해당 데이터를 판매, 대여 또는 공유하지 않습니다.</p></section>
+        <section><h2>7. 보안 및 사용자의 선택</h2><p>Silivue는 macOS App Sandbox를 사용하고 데이터를 로컬에 저장합니다. 어떠한 보안 방식도 모든 위험을 제거할 수 없으므로 적절한 계정, 암호, 디스크 암호화 및 운영체제 보안 설정으로 Mac을 보호하시기 바랍니다.</p><p>개별 모니터 비활성화, 새로 고침 간격 변경, 위치 권한 철회, 기록 삭제, 로그인 시 실행 비활성화 또는 앱 제거를 통해 Silivue를 제어할 수 있습니다.</p></section>
+        <section><h2>8. 아동의 개인정보</h2><p>Silivue는 범용 시스템 유틸리티이며 아동을 대상으로 하지 않습니다. 당사는 아동의 개인정보를 의도적으로 수집하지 않습니다.</p></section>
+        <section><h2>9. 국제 개인정보 보호 권리</h2><p>Silivue는 개발자가 관리하는 사용자 개인정보 데이터베이스를 보유하지 않습니다. 따라서 당사가 원격으로 보유하며 열람, 정정, 내보내기 또는 삭제할 개인정보는 일반적으로 없습니다. 사용자는 앱이 Mac에 로컬로 저장한 정보를 직접 관리할 수 있습니다.</p></section>
+        <section><h2>10. 본 방침의 변경</h2><p>Silivue의 기능 또는 법적 의무가 변경되면 본 방침을 업데이트할 수 있습니다. 페이지 상단의 시행일은 현재 버전을 나타냅니다. 중요한 변경 사항은 이 페이지와 필요한 경우 앱 또는 App Store 목록에 반영됩니다.</p></section>
+        <section><h2>11. 문의</h2><p>개인정보 보호 관련 문의나 요청은 <a href="https://github.com/derchLee/Silivue/issues" rel="noopener noreferrer">github.com/derchLee/Silivue/issues</a>에서 지원 이슈를 등록해 주세요.</p></section>
+      </article>
+    </div>
+
+    <div data-language-panel="de" lang="de" hidden>
+      <header class="hero">
+        <p class="eyebrow">Datenschutzerklärung · Gültig ab 13. September 2026</p>
+        <h1>Die Daten Ihres Mac bleiben auf Ihrem Mac.</h1>
+        <p class="lede">Silivue überwacht die Systemaktivität ohne Konto, Profilbildung oder Übermittlung von Überwachungsdaten an den Entwickler.</p>
+      </header>
+      <div class="summary" aria-label="Datenschutzübersicht">
+        <div><strong>Kein Konto</strong><span>Keine Registrierung und kein Identitätsprofil</span></div>
+        <div><strong>Kein Tracking</strong><span>Keine Werbung oder Analyse-SDKs von Drittanbietern</span></div>
+        <div><strong>Lokaler Verlauf</strong><span>Der Überwachungsverlauf bleibt auf Ihrem Mac</span></div>
+      </div>
+      <article>
+        <section>
+          <h2>1. Geltungsbereich</h2>
+          <p>Diese Datenschutzerklärung erläutert, wie Silivue („Silivue“, „die App“, „wir“ oder „uns“) Informationen bei der Nutzung der macOS-App Silivue verarbeitet.</p>
+          <div class="callout"><strong>Kurzfassung:</strong> Silivue sendet Ihre Systemüberwachungsdaten nicht an uns. Die App liest Systeminformationen und speichert Einstellungen sowie Verlaufsdaten lokal auf Ihrem Mac.</div>
+        </section>
+        <section>
+          <h2>2. Auf Ihrem Mac verarbeitete Informationen</h2>
+          <p>Zur Bereitstellung der Funktionen kann Silivue folgende Informationen lokal lesen und verarbeiten:</p>
+          <ul>
+            <li>CPU-Aktivität und Gesamtzahl der Kerne</li>
+            <li>Speichernutzung, Speicherdruck, Komprimierung, Cache und Auslagerung</li>
+            <li>Netzwerkübertragungsraten, Schnittstellendetails, lokale Netzwerkinformationen und bei erteilter Berechtigung den Namen des verbundenen WLANs</li>
+            <li>Speicherkapazität, Belegung und verfügbarer Speicher</li>
+            <li>über öffentliche macOS-Schnittstellen verfügbare Informationen zu Batterieladung, Stromquelle und Batteriezustand</li>
+            <li>den thermischen Systemzustand von macOS</li>
+          </ul>
+          <p>Wenn Sie den Leistungsrückblick öffnen, kann Silivue öffentliche Bundle-Kennungen laufender Apps verwenden, um einen allgemeinen Arbeitskontext wie IDE, Terminal, lokale KI-Laufzeit oder Container-Umgebung zu bestimmen. Diese Einordnung erfolgt ausschließlich auf Ihrem Mac, dient nur als Kontext und stellt keine Zuordnung des Ressourcenverbrauchs dar. Prozessnamen, Befehlsinhalte, Dateipfade, Kontodaten und Netzwerkziele werden nicht einbezogen.</p>
+          <p>Diese Informationen werden nur verwendet, um aktuelle Messwerte und Verlaufsdiagramme anzuzeigen, lokale Zustandsübersichten und Erläuterungen zu Auffälligkeiten zu erstellen, lokalen Arbeitskontext bereitzustellen und optionale lokale Mitteilungen auszulösen. Sie werden nicht an den Entwickler übertragen.</p>
+        </section>
+        <section>
+          <h2>3. Lokale Speicherung und Aufbewahrung</h2>
+          <p>Silivue speichert Einstellungen in den macOS-Benutzervorgaben und Überwachungsmesswerte in einer lokalen Datenbank im Application-Support-Speicher Ihres Mac. Beim Start entfernt die App automatisch Messwerte, die älter als 30 Tage sind.</p>
+          <p>In den Verlaufseinstellungen können Sie alte Daten bereinigen oder den gesamten gespeicherten Verlauf löschen. Beim Entfernen der App werden möglicherweise nicht alle Application-Support-Dateien automatisch entfernt; Sie können die lokalen Support-Daten von Silivue auch manuell löschen.</p>
+          <p>Wenn Sie „CSV exportieren“ wählen, schreibt Silivue den ausgewählten Verlauf an einen von Ihnen im macOS-Sicherungsdialog gewählten Ort. Silivue lädt exportierte Dateien weder hoch noch empfängt die App diese Dateien.</p>
+        </section>
+        <section>
+          <h2>4. Standortberechtigung und WLAN-Namen</h2>
+          <p>macOS schützt den Zugriff auf den Namen des verbundenen WLANs durch die Ortungsdienste. Silivue kann daher eine Standortberechtigung anfordern, um den aktuellen WLAN-Namen anzuzeigen.</p>
+          <p>Silivue fordert Ihre geografischen Koordinaten weder an noch verwendet, speichert oder überträgt die App diese. Wenn Sie die Berechtigung ablehnen, funktionieren die übrigen Überwachungsfunktionen weiter; der WLAN-Name ist jedoch möglicherweise nicht verfügbar. Sie können die Berechtigung jederzeit in den macOS-Systemeinstellungen ändern.</p>
+        </section>
+        <section>
+          <h2>5. Von uns erhobene Daten</h2>
+          <p>Silivue erhebt über die App keine personenbezogenen Daten oder Systemüberwachungsdaten. Die aktuelle Version enthält keine:</p>
+          <ul><li>vom Entwickler betriebenen Analyse- oder Telemetriedienste</li><li>Werbe-SDKs oder appübergreifende Verfolgung</li><li>Konten, Cloud-Synchronisierung oder entfernte Speicherung</li><li>In-App-Käufe oder Abonnements</li></ul>
+          <p>Apple kann App-Store-Downloads, Käufe, Diagnose- oder Analysedaten nach eigenen Richtlinien und Ihren Geräteeinstellungen unabhängig verarbeiten. Diese Verarbeitung wird von Apple und nicht von Silivue kontrolliert.</p>
+        </section>
+        <section><h2>6. Weitergabe und Verkauf</h2><p>Da Silivue Ihre personenbezogenen Daten oder Überwachungsdaten nicht empfängt, verkaufen, vermieten oder teilen wir diese Daten nicht mit Werbetreibenden, Datenhändlern oder anderen Dritten.</p></section>
+        <section><h2>7. Sicherheit und Ihre Wahlmöglichkeiten</h2><p>Silivue verwendet die macOS App Sandbox und speichert Daten lokal. Keine Sicherheitsmethode kann jedes Risiko ausschließen. Schützen Sie Ihren Mac daher zusätzlich mit geeigneten Konto-, Passwort-, Festplattenverschlüsselungs- und Betriebssystemeinstellungen.</p><p>Sie können einzelne Monitore deaktivieren, das Aktualisierungsintervall ändern, die Standortberechtigung widerrufen, den Verlauf löschen, den Start bei Anmeldung deaktivieren oder die App deinstallieren.</p></section>
+        <section><h2>8. Datenschutz von Kindern</h2><p>Silivue ist ein allgemeines Systemwerkzeug und richtet sich nicht an Kinder. Wir erheben wissentlich keine personenbezogenen Daten von Kindern.</p></section>
+        <section><h2>9. Internationale Datenschutzrechte</h2><p>Silivue unterhält keine vom Entwickler kontrollierte Datenbank mit personenbezogenen Nutzerdaten. Daher verfügen wir im Allgemeinen über keine entfernt gespeicherten personenbezogenen Daten, die wir bereitstellen, berichtigen, exportieren oder löschen könnten. Sie behalten die Kontrolle über die lokal von der App auf Ihrem Mac gespeicherten Informationen.</p></section>
+        <section><h2>10. Änderungen dieser Erklärung</h2><p>Wir können diese Erklärung aktualisieren, wenn sich die Funktionen von Silivue oder rechtliche Pflichten ändern. Das Datum oben auf dieser Seite kennzeichnet die aktuelle Fassung. Wesentliche Änderungen werden auf dieser Seite und gegebenenfalls in der App oder im App-Store-Eintrag ausgewiesen.</p></section>
+        <section><h2>11. Kontakt</h2><p>Bei Datenschutzfragen oder -anfragen erstellen Sie bitte unter <a href="https://github.com/derchLee/Silivue/issues" rel="noopener noreferrer">github.com/derchLee/Silivue/issues</a> eine Supportanfrage.</p></section>
+      </article>
+    </div>
+
     <footer>
       <p>Silivue · Bundle ID: com.upupdays.silivue</p>
     </footer>
@@ -436,12 +554,22 @@
         buttons.forEach((button) => {
           button.setAttribute("aria-selected", String(button.dataset.languageButton === language));
         });
-        document.documentElement.lang = language === "zh" ? "zh-Hans" : "en";
+        document.documentElement.lang = language === "zh" ? "zh-Hans" : language;
+        localStorage.setItem("silivue-privacy-language", language);
       }
 
       buttons.forEach((button) => {
         button.addEventListener("click", () => showLanguage(button.dataset.languageButton));
       });
+
+      const supported = ["en", "zh", "ko", "de"];
+      const saved = localStorage.getItem("silivue-privacy-language");
+      const requested = new URLSearchParams(window.location.search).get("lang");
+      const browserLanguage = navigator.language.toLowerCase();
+      const preferred = supported.includes(requested) ? requested
+        : supported.includes(saved) ? saved
+        : supported.find((language) => browserLanguage.startsWith(language)) || "en";
+      showLanguage(preferred);
     })();
   </script>
 </body>

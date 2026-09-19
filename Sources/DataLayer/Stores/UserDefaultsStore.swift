@@ -60,6 +60,14 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
         }
     }
 
+    @Published public var language: AppLanguage {
+        didSet {
+            defaults.set(language.rawValue, forKey: Key.language)
+            AppLocalization.configure(language: language)
+            publishChange()
+        }
+    }
+
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
@@ -88,6 +96,8 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
         self.healthNotificationsEnabled = defaults.bool(forKey: Key.healthNotificationsEnabled)
         self.cpuAlertThreshold = defaults.object(forKey: Key.cpuAlertThreshold) as? Double ?? 85
         self.diskFreeAlertThreshold = defaults.object(forKey: Key.diskFreeAlertThreshold) as? Double ?? 10
+        self.language = defaults.string(forKey: Key.language).flatMap(AppLanguage.init(rawValue:)) ?? .english
+        AppLocalization.configure(language: language)
     }
 
     private func publishChange() {
@@ -98,7 +108,8 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
             launchAtLogin: launchAtLogin,
             healthNotificationsEnabled: healthNotificationsEnabled,
             cpuAlertThreshold: cpuAlertThreshold,
-            diskFreeAlertThreshold: diskFreeAlertThreshold
+            diskFreeAlertThreshold: diskFreeAlertThreshold,
+            language: language
         ))
     }
 
@@ -110,5 +121,6 @@ public final class UserDefaultsStore: SettingsStore, ObservableObject {
         static let healthNotificationsEnabled = "healthNotificationsEnabled"
         static let cpuAlertThreshold = "cpuAlertThreshold"
         static let diskFreeAlertThreshold = "diskFreeAlertThreshold"
+        static let language = "appLanguage"
     }
 }

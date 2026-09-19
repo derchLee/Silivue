@@ -6,17 +6,19 @@ import DataLayer
 
 public struct PopoverView: View {
     @ObservedObject var engine: MonitorEngine
-    let settings: SettingsStore
+    @ObservedObject var settings: UserDefaultsStore
     let historyStore: HistoryStore?
     let onSettingsTapped: () -> Void
     let onMoreTapped: () -> Void
+    let onQuitTapped: () -> Void
 
-    public init(engine: MonitorEngine, settings: SettingsStore, historyStore: HistoryStore? = nil, onSettingsTapped: @escaping () -> Void, onMoreTapped: @escaping () -> Void) {
+    public init(engine: MonitorEngine, settings: UserDefaultsStore, historyStore: HistoryStore? = nil, onSettingsTapped: @escaping () -> Void, onMoreTapped: @escaping () -> Void, onQuitTapped: @escaping () -> Void) {
         self.engine = engine
         self.settings = settings
         self.historyStore = historyStore
         self.onSettingsTapped = onSettingsTapped
         self.onMoreTapped = onMoreTapped
+        self.onQuitTapped = onQuitTapped
     }
 
     public var body: some View {
@@ -53,7 +55,7 @@ public struct PopoverView: View {
             }
         }
         .frame(width: 320)
-        .environment(\.locale, Locale(identifier: "en_US"))
+        .environment(\.locale, Locale(identifier: settings.language.localeIdentifier))
     }
 
     // MARK: - 顶部标题栏
@@ -129,7 +131,7 @@ public struct PopoverView: View {
         return false
     }
 
-    private var liveHealthTitle: String { needsAttention ? "Attention" : "Healthy" }
+    private var liveHealthTitle: String { AppLocalization.text(needsAttention ? "Attention" : "Healthy") }
     private var liveHealthColor: Color { needsAttention ? TechColors.accentOrange : TechColors.accentGreen }
 
     // MARK: - CPU 区域
@@ -193,7 +195,7 @@ public struct PopoverView: View {
             Text(value)
                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .foregroundColor(TechColors.textPrimary)
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 8))
                 .foregroundColor(TechColors.textMuted)
         }
@@ -204,7 +206,7 @@ public struct PopoverView: View {
             Text(value)
                 .font(.system(size: 9, weight: .medium, design: .monospaced))
                 .foregroundColor(color)
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 7))
                 .foregroundColor(TechColors.textMuted)
         }
@@ -390,11 +392,11 @@ public struct PopoverView: View {
                     TechProgressBar(value: volume.usagePercent, color: TechColors.accentTeal, height: 4)
 
                     HStack {
-                        Text("\(Int(volume.usagePercent))% used")
+                        Text(AppLocalization.format("%d%% used", Int(volume.usagePercent)))
                             .font(.system(size: 8))
                             .foregroundColor(TechColors.textMuted)
                         Spacer()
-                        Text("\(ByteFormatter.format(volume.totalBytes &- volume.usedBytes)) free")
+                        Text(AppLocalization.format("%@ free", ByteFormatter.format(volume.totalBytes &- volume.usedBytes)))
                             .font(.system(size: 8))
                             .foregroundColor(TechColors.textMuted)
                     }
@@ -445,6 +447,26 @@ public struct PopoverView: View {
                 )
             }
             .buttonStyle(.plain)
+
+            Button(action: onQuitTapped) {
+                HStack(spacing: 5) {
+                    Image(systemName: "power")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text("Quit")
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundColor(TechColors.accentRed)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(TechColors.accentRed.opacity(0.1))
+                .cornerRadius(5)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(TechColors.accentRed.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .help("Quit Silivue")
 
             Spacer()
 

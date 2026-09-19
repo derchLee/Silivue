@@ -4,7 +4,7 @@ import XCTest
 final class DisplayModeTests: XCTestCase {
 
     func testAllCases() {
-        XCTAssertEqual(DisplayMode.allCases.count, 3)
+        XCTAssertEqual(DisplayMode.allCases.count, 4)
     }
 
     func testDisplayNames() {

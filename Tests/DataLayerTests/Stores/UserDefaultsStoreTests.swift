@@ -15,6 +15,7 @@ final class UserDefaultsStoreTests: XCTestCase {
     }
 
     override func tearDown() {
+        AppLocalization.configure(language: .english)
         cancellables.removeAll()
         testDefaults.removePersistentDomain(forName: testDefaults.dictionaryRepresentation()["SuiteName"] as? String ?? "")
         super.tearDown()
@@ -52,6 +53,10 @@ final class UserDefaultsStoreTests: XCTestCase {
         XCTAssertEqual(store.diskFreeAlertThreshold, 10)
     }
 
+    func testDefaultLanguageIsEnglish() {
+        XCTAssertEqual(store.language, .english)
+    }
+
     // MARK: - 持久化
 
     func testSavesRefreshInterval() {
@@ -87,6 +92,17 @@ final class UserDefaultsStoreTests: XCTestCase {
         XCTAssertTrue(newStore.healthNotificationsEnabled)
         XCTAssertEqual(newStore.cpuAlertThreshold, 95)
         XCTAssertEqual(newStore.diskFreeAlertThreshold, 5)
+    }
+
+    func testSavesLanguage() {
+        store.language = .korean
+        let newStore = UserDefaultsStore(defaults: testDefaults)
+        XCTAssertEqual(newStore.language, .korean)
+    }
+
+    func testUnknownLanguageFallsBackToEnglish() {
+        testDefaults.set("xx", forKey: "appLanguage")
+        XCTAssertEqual(UserDefaultsStore(defaults: testDefaults).language, .english)
     }
 
     // MARK: - 发布者

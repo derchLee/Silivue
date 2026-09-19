@@ -17,8 +17,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var healthNotificationCoordinator: HealthNotificationCoordinator?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // 菜单栏应用不显示Dock图标
-        NSApp.setActivationPolicy(.accessory)
+        // Use the standard macOS application menu so Quit Silivue is available.
+        NSApp.setActivationPolicy(.regular)
         // 初始化历史存储
         if let store = try? SQLiteHistoryStore() {
             historyStore = store
@@ -116,6 +116,7 @@ private final class HealthNotificationCoordinator: NSObject, UNUserNotificationC
     private let settings: UserDefaultsStore
     private var cancellables = Set<AnyCancellable>()
     private var highCPUStartedAt: Date?
+    private let memoryGrowthDetector = MemoryGrowthDetector()
     private var lastSent: [String: Date] = [:]
     private let cooldown: TimeInterval = 60 * 60
 
@@ -149,8 +150,8 @@ private final class HealthNotificationCoordinator: NSObject, UNUserNotificationC
         if sample.usagePercent >= settings.cpuAlertThreshold {
             highCPUStartedAt = highCPUStartedAt ?? sample.timestamp
             if let start = highCPUStartedAt, sample.timestamp.timeIntervalSince(start) >= 120 {
-                send(key: "cpu", title: "Sustained high CPU",
-                     body: "CPU has stayed above " + String(Int(settings.cpuAlertThreshold)) + "% for at least 2 minutes.")
+                send(key: "cpu", title: AppLocalization.text("Sustained high CPU"),
+                     body: AppLocalization.format("CPU has stayed above %d%% for at least 2 minutes.", Int(settings.cpuAlertThreshold)))
             }
         } else {
             highCPUStartedAt = nil
@@ -158,25 +159,31 @@ private final class HealthNotificationCoordinator: NSObject, UNUserNotificationC
     }
 
     private func evaluateMemory(_ sample: MemorySample) {
-        guard settings.healthNotificationsEnabled, sample.pressureLevel != .normal else { return }
-        let label = sample.pressureLevel == .critical ? "Critical" : "Elevated"
-        send(key: "memory", title: label + " memory pressure",
-             body: "macOS is reporting " + label.lowercased() + " memory pressure. Review active apps if performance is affected.")
+        guard settings.healthNotificationsEnabled else { return }
+        if sample.pressureLevel != .normal {
+            let label = sample.pressureLevel == .critical ? AppLocalization.text("Critical") : AppLocalization.text("Elevated")
+            send(key: "memory", title: AppLocalization.format("%@ memory pressure", label),
+                 body: AppLocalization.format("macOS is reporting %@ memory pressure. Review active apps if performance is affected.", label.lowercased()))
+        }
+        if memoryGrowthDetector.shouldAlert(for: sample) {
+            send(key: "memory-growth", title: AppLocalization.text("Memory use kept growing"),
+                 body: AppLocalization.text("System memory grew by at least 1 GB over 10 minutes. Open Replay or Activity Monitor to investigate."))
+        }
     }
 
     private func evaluateDisk(_ sample: DiskSample) {
         guard settings.healthNotificationsEnabled else { return }
         guard let volume = sample.volumes.max(by: { $0.usagePercent < $1.usagePercent }),
               100 - volume.usagePercent <= settings.diskFreeAlertThreshold else { return }
-        send(key: "disk-\(volume.mountPoint)", title: "Disk space is running low",
-             body: (volume.name.isEmpty ? volume.mountPoint : volume.name) + " has " + String(Int(100 - volume.usagePercent)) + "% free space remaining.")
+        send(key: "disk-\(volume.mountPoint)", title: AppLocalization.text("Disk space is running low"),
+             body: AppLocalization.format("%@ has %d%% free space remaining.", volume.name.isEmpty ? volume.mountPoint : volume.name, Int(100 - volume.usagePercent)))
     }
 
     private func evaluateThermal(_ sample: TemperatureSample) {
         guard settings.healthNotificationsEnabled,
               sample.thermalState == .serious || sample.thermalState == .critical else { return }
-        send(key: "thermal", title: "Thermal pressure detected",
-             body: "macOS reports " + sample.thermalState.rawValue + " thermal pressure. Reduce heavy workloads and improve airflow.")
+        send(key: "thermal", title: AppLocalization.text("Thermal pressure detected"),
+             body: AppLocalization.format("macOS reports %@ thermal pressure. Reduce heavy workloads and improve airflow.", sample.thermalState.rawValue))
     }
 
     private func send(key: String, title: String, body: String) {
@@ -185,7 +192,7 @@ private final class HealthNotificationCoordinator: NSObject, UNUserNotificationC
         lastSent[key] = now
 
         let content = UNMutableNotificationContent()
-        content.title = "Silivue — " + title
+        content.title = AppLocalization.format("Silivue — %@", title)
         content.body = body
         content.sound = .default
         let request = UNNotificationRequest(identifier: "silivue.health.\(key).\(Int(now.timeIntervalSince1970))",

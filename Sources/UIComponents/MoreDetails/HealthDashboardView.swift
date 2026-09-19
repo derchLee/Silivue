@@ -83,15 +83,15 @@ struct HealthDashboardView: View {
             }
             .frame(width: 82, height: 82)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Health score " + String(report.score) + " out of 100")
+            .accessibilityLabel(AppLocalization.format("Health score %d out of 100", report.score))
 
             VStack(alignment: .leading, spacing: 7) {
                 Text(report.summary)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(TechColors.textPrimary)
                 Text(report.events.isEmpty
-                     ? "No actionable anomalies were found in the selected period."
-                     : "\(report.events.filter { $0.severity != .info }.count) actionable item(s) found from \(report.sampleCount) local samples.")
+                     ? AppLocalization.text("No actionable anomalies were found in the selected period.")
+                     : AppLocalization.format("%d actionable item(s) found from %d local samples.", report.events.filter { $0.severity != .info }.count, report.sampleCount))
                     .font(.system(size: 10))
                     .foregroundColor(TechColors.textSecondary)
                 Text("Score reflects detected resource pressure and is informational, not a hardware diagnostic.")
@@ -126,7 +126,7 @@ struct HealthDashboardView: View {
     private func comparisonCard(_ item: MetricComparison) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(item.metric.rawValue)
+                Text(item.metric.displayName)
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundColor(TechColors.textSecondary)
                 Spacer()
@@ -143,7 +143,7 @@ struct HealthDashboardView: View {
             Text(metricValue(item.average, item.unit))
                 .font(.system(size: 15, weight: .bold, design: .monospaced))
                 .foregroundColor(metricColor(item.metric))
-            Text("avg · peak \(metricValue(item.peak, item.unit))")
+            Text(AppLocalization.format("avg · peak %@", metricValue(item.peak, item.unit)))
                 .font(.system(size: 8))
                 .foregroundColor(TechColors.textMuted)
         }
@@ -191,7 +191,7 @@ struct HealthDashboardView: View {
                     Text(event.title)
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(TechColors.textPrimary)
-                    Text("· \(event.metric.rawValue)")
+                    Text("· " + event.metric.displayName)
                         .font(.system(size: 9))
                         .foregroundColor(TechColors.textMuted)
                     Spacer()
@@ -227,7 +227,7 @@ struct HealthDashboardView: View {
     private var privacyNote: some View {
         HStack(spacing: 5) {
             Image(systemName: "lock.shield.fill")
-            Text(exportMessage ?? "Analyzed locally · No account · No metric history is uploaded")
+            Text(exportMessage ?? AppLocalization.text("Analyzed locally · No account · No metric history is uploaded"))
             Spacer()
         }
         .font(.system(size: 8, weight: .medium))
@@ -270,15 +270,15 @@ struct HealthDashboardView: View {
 
     private func exportCSV() {
         let panel = NSSavePanel()
-        panel.title = "Silivue — Export History"
+        panel.title = AppLocalization.text("Silivue — Export History")
         panel.nameFieldStringValue = "Silivue-\(period.rawValue)-history.csv"
         panel.allowedContentTypes = [.commaSeparatedText]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try HistoryCSVExporter.makeCSV(samplesByMonitor: currentSamples).write(to: url, atomically: true, encoding: .utf8)
-            exportMessage = "Exported locally to \(url.lastPathComponent)"
+            exportMessage = AppLocalization.format("Exported locally to %@", url.lastPathComponent)
         } catch {
-            exportMessage = "Export failed. Choose a writable location and try again."
+            exportMessage = AppLocalization.text("Export failed. Choose a writable location and try again.")
         }
     }
 
@@ -309,9 +309,9 @@ struct MetricExplanationCard: View {
                 .font(.system(size: 10))
                 .foregroundColor(color)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 10, weight: .bold)).foregroundColor(TechColors.textPrimary)
-                Text(explanation).font(.system(size: 9)).foregroundColor(TechColors.textSecondary)
-                Text(recommendation).font(.system(size: 9, weight: .medium)).foregroundColor(color)
+                Text(LocalizedStringKey(title)).font(.system(size: 10, weight: .bold)).foregroundColor(TechColors.textPrimary)
+                Text(LocalizedStringKey(explanation)).font(.system(size: 9)).foregroundColor(TechColors.textSecondary)
+                Text(LocalizedStringKey(recommendation)).font(.system(size: 9, weight: .medium)).foregroundColor(color)
             }
             Spacer()
         }

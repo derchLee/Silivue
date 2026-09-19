@@ -10,5 +10,6 @@ public protocol SettingsStore: AnyObject {
     var healthNotificationsEnabled: Bool { get set }
     var cpuAlertThreshold: Double { get set }
     var diskFreeAlertThreshold: Double { get set }
+    var language: AppLanguage { get set }
     var settingsChanged: AnyPublisher<AppSettings, Never> { get }
 }

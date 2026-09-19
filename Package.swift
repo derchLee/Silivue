@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "Silivue",
+    defaultLocalization: "en",
     platforms: [.macOS(.v13)],
     products: [
         .executable(name: "Silivue", targets: ["Silivue"]),
@@ -18,7 +19,7 @@ let package = Package(
             dependencies: ["MonitorEngine", "DataLayer", "UIComponents"],
             path: "Sources/StatusStats",
             exclude: ["Info.plist"],
-            resources: [.process("Assets.xcassets"), .copy("Silivue.icns")],
+            resources: [.process("Assets.xcassets"), .process("Resources"), .copy("Silivue.icns")],
             linkerSettings: [.linkedFramework("CoreLocation")]
         ),
 
